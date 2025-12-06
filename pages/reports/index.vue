@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ReportList from "@/components/organisms/manageReports/ReportList.vue";
+import ReportList from "@/components/organisms/reports/ReportList.vue";
 
 interface Reporter {
   _id: string;

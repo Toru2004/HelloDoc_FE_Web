@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import DoctorList from "@/components/organisms/manageDoctors/DoctorList.vue";
+import DoctorList from "@/components/organisms/doctors/DoctorList.vue";
 
 interface Specialty {
   _id: string;

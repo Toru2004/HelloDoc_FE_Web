@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import UserList from "@/components/organisms/manageUsers/UserList.vue";
+import UserList from "@/components/organisms/users/UserList.vue";
 
 interface User {
   _id: string;

@@ -65,6 +65,8 @@ const getStatusText = (status: string) => {
   switch (status.toLowerCase()) {
     case 'pending':
       return 'Chờ xử lý';
+    case 'opened':
+      return 'Đang chờ xử lý';
     case 'processing':
       return 'Đang xử lý';
     case 'closed':

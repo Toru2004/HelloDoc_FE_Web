@@ -23,13 +23,13 @@ const menuItems = [
   },
   { 
     label: "Bác sĩ", 
-    path: "/manageDoctors", 
+    path: "/doctors", 
     icon: Stethoscope,
     description: "Danh sách bác sĩ"
   },
   { 
     label: "Người dùng", 
-    path: "/manageUsers", 
+    path: "/users", 
     icon: Users,
     description: "Quản lý bệnh nhân"
   },
