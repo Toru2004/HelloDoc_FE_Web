@@ -1,0 +1,82 @@
+<script setup lang="ts">
+import SpecialtyList from "@/components/organisms/manageSpecialties/SpecialtyList.vue";
+
+interface Doctor {
+  _id: string;
+  name: string;
+  avatarURL?: string;
+}
+
+interface Specialty {
+  _id: string;
+  name: string;
+  icon: string;
+  description: string;
+  doctors: Doctor[];
+}
+
+definePageMeta({
+  layout: "default",
+});
+
+useHead({
+  title: 'Quản lý chuyên khoa - HelloDoc',
+});
+
+const api = useApi();
+const specialties = ref<Specialty[]>([]);
+const loading = ref(false);
+const error = ref('');
+
+// Fetch specialties on component mount
+onMounted(async () => {
+  await fetchSpecialties();
+});
+
+const fetchSpecialties = async () => {
+  loading.value = true;
+  error.value = '';
+  
+  try {
+    const response = await api.get<Specialty[]>('/specialty/get-all');
+    specialties.value = response;
+    console.log('Fetched specialties:', response.length);
+  } catch (err: any) {
+    error.value = err.message || 'Không thể tải danh sách chuyên khoa';
+    console.error('Error fetching specialties:', err);
+  } finally {
+    loading.value = false;
+  }
+};
+</script>
+
+<template>
+  <div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-gray-800">Quản lý chuyên khoa</h1>
+      <p class="text-gray-600 mt-2">Danh sách các chuyên khoa trong hệ thống HelloDoc</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+      <div class="flex items-center gap-3">
+        <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div>
+          <h3 class="font-semibold text-red-800">Lỗi tải dữ liệu</h3>
+          <p class="text-red-600">{{ error }}</p>
+        </div>
+      </div>
+      <button
+        @click="fetchSpecialties"
+        class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
+      >
+        Thử lại
+      </button>
+    </div>
+
+    <!-- Specialty List -->
+    <SpecialtyList :specialties="specialties" :loading="loading" />
+  </div>
+</template>
