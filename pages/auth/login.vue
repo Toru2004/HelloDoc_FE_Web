@@ -5,61 +5,14 @@ definePageMeta({
     layout: "auth",
 });
 
-const router = useRouter();
-const auth = useAuth();
-const api = useApi();
-const email = ref("");
-const password = ref("");
-const errorMsg = ref("");
-const showPassword = ref(false);
-const isLoading = ref(false);
-
-const handleLogin = async () => {
-    errorMsg.value = "";
-    isLoading.value = true;
-    
-    try {
-        // Call login API using the API service
-        const data = await api.login(email.value, password.value);
-        
-        if (!data.accessToken) {
-            errorMsg.value = "Không nhận được token từ server.";
-            return;
-        }
-
-        // Decode JWT token
-        const userInfo = decodeJWT(data.accessToken);
-        
-        if (!userInfo) {
-            errorMsg.value = "Token không hợp lệ.";
-            return;
-        }
-
-        // Check if user is admin
-        if (!isAdmin(data.accessToken)) {
-            errorMsg.value = "Tài khoản không phải admin";
-            return;
-        }
-
-        // Save authentication data
-        auth.saveAuth(data.accessToken, userInfo);
-
-        console.log("Đăng nhập thành công:", {
-            name: userInfo.name,
-            email: userInfo.email,
-            role: userInfo.role,
-        });
-
-        // Redirect to dashboard
-        router.push("/dashboard");
-        
-    } catch (error: any) {
-        console.error("Login error:", error);
-        errorMsg.value = error.message || "Sai email, mật khẩu hoặc mất kết nối mạng";
-    } finally {
-        isLoading.value = false;
-    }
-};
+const {
+    email,
+    password,
+    errorMsg,
+    showPassword,
+    isLoading,
+    handleLogin
+} = useAuthViewModel();
 </script>
 
 <template>

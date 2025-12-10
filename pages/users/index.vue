@@ -10,37 +10,12 @@ useHead({
   title: 'Quản lý người dùng - HelloDoc',
 });
 
-const api = useApi();
-const users = ref<User[]>([]);
-const loading = ref(false);
-const error = ref('');
-
-// Computed property to filter only users with role 'User'
-const filteredUsers = computed(() => {
-  return users.value.filter(user => user.role.toLowerCase() === 'user');
-});
+const { users, filteredUsers, loading, error, fetchUsers } = useUserViewModel();
 
 // Fetch users on component mount
 onMounted(async () => {
   await fetchUsers();
 });
-
-const fetchUsers = async () => {
-  loading.value = true;
-  error.value = '';
-  
-  try {
-    const response = await api.get<User[]>('/user');
-    users.value = response;
-    console.log('Fetched all users:', response.length);
-    console.log('Filtered users (role=User):', filteredUsers.value.length);
-  } catch (err: any) {
-    error.value = err.message || 'Không thể tải danh sách người dùng';
-    console.error('Error fetching users:', err);
-  } finally {
-    loading.value = false;
-  }
-};
 
 const handleAdd = () => {
   // TODO: Implement add user functionality

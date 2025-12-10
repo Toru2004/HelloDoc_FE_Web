@@ -11,7 +11,7 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
-const api = useApi();
+const { createSpecialty } = useSpecialtyViewModel();
 
 // Form state
 const formData = ref({
@@ -111,7 +111,7 @@ const handleSubmit = async () => {
       data.append('icon', formData.value.icon);
     }
     
-    await api.postFormData('/specialty/create', data);
+    await createSpecialty(data);
     
     // Reset form
     formData.value = { name: '', description: '', icon: null };

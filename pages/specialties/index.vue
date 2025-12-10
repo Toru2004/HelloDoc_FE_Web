@@ -12,10 +12,7 @@ useHead({
   title: 'Quản lý chuyên khoa - HelloDoc',
 });
 
-const api = useApi();
-const specialties = ref<Specialty[]>([]);
-const loading = ref(false);
-const error = ref('');
+const { specialties, loading, error, fetchSpecialties } = useSpecialtyViewModel();
 const isModalOpen = ref(false);
 const isEditModalOpen = ref(false);
 const selectedSpecialty = ref<Specialty | null>(null);
@@ -25,22 +22,6 @@ const successMessage = ref('');
 onMounted(async () => {
   await fetchSpecialties();
 });
-
-const fetchSpecialties = async () => {
-  loading.value = true;
-  error.value = '';
-  
-  try {
-    const response = await api.get<Specialty[]>('/specialty/get-all');
-    specialties.value = response;
-    console.log('Fetched specialties:', response.length);
-  } catch (err: any) {
-    error.value = err.message || 'Không thể tải danh sách chuyên khoa';
-    console.error('Error fetching specialties:', err);
-  } finally {
-    loading.value = false;
-  }
-};
 
 const handleAdd = () => {
   isModalOpen.value = true;
