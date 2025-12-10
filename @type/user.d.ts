@@ -1,24 +1,19 @@
 // @type/user.d.ts
+// User-related type definitions
 
-type UserRegister = {
-    ten: string;
-    biensoxe: string;
-    biensophu: biensophu;
-    email: string;
-    cccd: string;
-    role: string;
-};
-type UserCreate = {
-    ten: string;
-    biensoxe: string;
-    biensophu: biensophu;
-    email: string;
-    cccd: string;
-    role: string;
-    password: string;
-};
-type biensophu = {
-    bienSo: string;
-    createdAt: number;
-    ngayHetHan: number;
-};
+/**
+ * User entity
+ */
+type User = {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  role: string;
+  avatarURL?: string;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+  fcmToken?: string;
+}

@@ -1,30 +1,6 @@
 <script setup lang="ts">
 import ReportList from "@/components/organisms/reports/ReportList.vue";
 
-interface Reporter {
-  _id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  role: string;
-  avatarURL?: string;
-}
-
-interface Report {
-  _id: string;
-  reporter: Reporter;
-  reporterModel: string;
-  content: string;
-  type: string;
-  status: string;
-  reportedId: string;
-  createdAt: string;
-  updatedAt: string;
-  responseContent?: string;
-  responseTime?: string;
-}
-
 definePageMeta({
   layout: "default",
 });

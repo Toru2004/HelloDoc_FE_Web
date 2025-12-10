@@ -1,28 +1,6 @@
 <script setup lang="ts">
 import Infomation from "@/components/organisms/dashboard/Infomation.vue";
 
-interface User {
-  _id: string;
-  role: string;
-}
-
-interface Doctor {
-  _id: string;
-  patientsCount: number;
-  ratingsCount: number;
-  verified: boolean;
-}
-
-interface Specialty {
-  _id: string;
-  doctors: any[];
-}
-
-interface Report {
-  _id: string;
-  status: string;
-}
-
 definePageMeta({
   layout: "default",
 });

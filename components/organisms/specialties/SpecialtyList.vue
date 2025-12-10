@@ -1,18 +1,4 @@
 <script setup lang="ts">
-interface Doctor {
-  _id: string;
-  name: string;
-  avatarURL?: string;
-}
-
-interface Specialty {
-  _id: string;
-  name: string;
-  icon: string;
-  description: string;
-  doctors: Doctor[];
-}
-
 interface Props {
   specialties: Specialty[];
   loading?: boolean;

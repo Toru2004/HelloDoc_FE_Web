@@ -1,20 +1,6 @@
 <script setup lang="ts">
 import SpecialtyList from "@/components/organisms/specialties/SpecialtyList.vue";
 
-interface Doctor {
-  _id: string;
-  name: string;
-  avatarURL?: string;
-}
-
-interface Specialty {
-  _id: string;
-  name: string;
-  icon: string;
-  description: string;
-  doctors: Doctor[];
-}
-
 definePageMeta({
   layout: "default",
 });

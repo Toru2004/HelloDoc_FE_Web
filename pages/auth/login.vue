@@ -67,7 +67,7 @@ const handleLogin = async () => {
         <div class="w-full max-w-md p-8 bg-white shadow-xl rounded-2xl">
             <div class="mb-6 text-center">
                 <h1 class="text-3xl font-bold text-gray-800">HelloDoc Admin</h1>
-                <p class="mt-1 text-sm text-gray-500">Đăng nhập để quản lý bãi đỗ xe</p>
+                <p class="mt-1 text-sm text-gray-500">Đăng nhập để quản lý dữ liệu</p>
             </div>
 
             <form @submit.prevent="handleLogin" class="space-y-5">

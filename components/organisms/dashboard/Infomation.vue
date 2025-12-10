@@ -192,7 +192,7 @@ const additionalStats = computed(() => [
         <h2 class="text-xl font-bold text-gray-800 mb-6">Thao tác nhanh</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <NuxtLink
-            to="/manageUsers"
+            to="/users"
             class="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all group"
           >
             <Users class="w-5 h-5 text-blue-600" />
@@ -200,7 +200,7 @@ const additionalStats = computed(() => [
           </NuxtLink>
           
           <NuxtLink
-            to="/manageDoctors"
+            to="/doctors"
             class="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-all group"
           >
             <Stethoscope class="w-5 h-5 text-green-600" />
