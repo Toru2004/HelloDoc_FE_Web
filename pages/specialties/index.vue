@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SpecialtyList from "@/components/organisms/specialties/SpecialtyList.vue";
+import PageOverview from "@/components/molecules/PageOverview.vue";
 
 definePageMeta({
   layout: "default",
@@ -34,14 +35,24 @@ const fetchSpecialties = async () => {
     loading.value = false;
   }
 };
+
+const handleAdd = () => {
+  // TODO: Implement add specialty functionality
+  console.log('Add specialty clicked');
+};
 </script>
 
 <template>
   <div class="container mx-auto px-4 py-8">
-    <div class="mb-6">
-      <h1 class="text-3xl font-bold text-gray-800">Quản lý chuyên khoa</h1>
-      <p class="text-gray-600 mt-2">Danh sách các chuyên khoa trong hệ thống HelloDoc</p>
-    </div>
+    <!-- Page Overview -->
+    <PageOverview
+      title="Quản lý chuyên khoa"
+      description="Danh sách các chuyên khoa trong hệ thống HelloDoc"
+      add-label="Thêm chuyên khoa"
+      :loading="loading"
+      @reload="fetchSpecialties"
+      @add="handleAdd"
+    />
 
     <!-- Error State -->
     <div v-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">

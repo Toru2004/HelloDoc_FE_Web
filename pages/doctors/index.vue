@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import DoctorList from "@/components/organisms/doctors/DoctorList.vue";
+import PageOverview from "@/components/molecules/PageOverview.vue";
 
 definePageMeta({
   layout: "default",
@@ -34,14 +35,24 @@ const fetchDoctors = async () => {
     loading.value = false;
   }
 };
+
+const handleAdd = () => {
+  // TODO: Implement add doctor functionality
+  console.log('Add doctor clicked');
+};
 </script>
 
 <template>
   <div class="container mx-auto px-4 py-8">
-    <div class="mb-6">
-      <h1 class="text-3xl font-bold text-gray-800">Quản lý bác sĩ</h1>
-      <p class="text-gray-600 mt-2">Danh sách bác sĩ trong hệ thống HelloDoc</p>
-    </div>
+    <!-- Page Overview -->
+    <PageOverview
+      title="Quản lý bác sĩ"
+      description="Danh sách bác sĩ trong hệ thống HelloDoc"
+      add-label="Thêm bác sĩ"
+      :loading="loading"
+      @reload="fetchDoctors"
+      @add="handleAdd"
+    />
 
     <!-- Error State -->
     <div v-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -62,7 +73,7 @@ const fetchDoctors = async () => {
       </button>
     </div>
 
-    <!-- Doctor List -->
+    <!-- Doctor List Table -->
     <DoctorList :doctors="doctors" :loading="loading" />
   </div>
 </template>

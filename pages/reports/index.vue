@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ReportList from "@/components/organisms/reports/ReportList.vue";
+import PageOverview from "@/components/molecules/PageOverview.vue";
 
 definePageMeta({
   layout: "default",
@@ -34,14 +35,24 @@ const fetchReports = async () => {
     loading.value = false;
   }
 };
+
+const handleAdd = () => {
+  // TODO: Implement add report functionality
+  console.log('Add report clicked');
+};
 </script>
 
 <template>
   <div class="container mx-auto px-4 py-8">
-    <div class="mb-6">
-      <h1 class="text-3xl font-bold text-gray-800">Quản lý báo cáo</h1>
-      <p class="text-gray-600 mt-2">Danh sách báo cáo vi phạm trong hệ thống HelloDoc</p>
-    </div>
+    <!-- Page Overview -->
+    <PageOverview
+      title="Quản lý báo cáo"
+      description="Danh sách báo cáo vi phạm trong hệ thống HelloDoc"
+      add-label="Thêm báo cáo"
+      :show-add="false"
+      :loading="loading"
+      @reload="fetchReports"
+    />
 
     <!-- Error State -->
     <div v-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">

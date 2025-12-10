@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import UserList from "@/components/organisms/users/UserList.vue";
+import PageOverview from "@/components/molecules/PageOverview.vue";
 
 definePageMeta({
   layout: "default",
@@ -41,14 +42,23 @@ const fetchUsers = async () => {
   }
 };
 
+const handleAdd = () => {
+  // TODO: Implement add user functionality
+  console.log('Add user clicked');
+};
+
 </script>
 
 <template>
   <div class="container mx-auto px-4 py-8">
-    <div class="mb-6">
-      <h1 class="text-3xl font-bold text-gray-800">Quản lý người dùng</h1>
-      <p class="text-gray-600 mt-2">Danh sách người dùng trong hệ thống HelloDoc</p>
-    </div>
+    <!-- Page Overview -->
+    <PageOverview
+      title="Quản lý người dùng"
+      description="Danh sách người dùng trong hệ thống HelloDoc"
+      :loading="loading"
+      @reload="fetchUsers"
+      @add="handleAdd"
+    />
 
     <!-- Error State -->
     <div v-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
