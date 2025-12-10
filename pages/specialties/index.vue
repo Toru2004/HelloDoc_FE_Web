@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import SpecialtyList from "@/components/organisms/specialties/SpecialtyList.vue";
 import PageOverview from "@/components/molecules/PageOverview.vue";
+import AddSpecialtyModal from "@/components/modal/AddSpecialtyModal.vue";
+import EditSpecialtyModal from "@/components/modal/EditSpecialtyModal.vue";
 
 definePageMeta({
   layout: "default",
@@ -14,6 +16,10 @@ const api = useApi();
 const specialties = ref<Specialty[]>([]);
 const loading = ref(false);
 const error = ref('');
+const isModalOpen = ref(false);
+const isEditModalOpen = ref(false);
+const selectedSpecialty = ref<Specialty | null>(null);
+const successMessage = ref('');
 
 // Fetch specialties on component mount
 onMounted(async () => {
@@ -37,8 +43,41 @@ const fetchSpecialties = async () => {
 };
 
 const handleAdd = () => {
-  // TODO: Implement add specialty functionality
-  console.log('Add specialty clicked');
+  isModalOpen.value = true;
+};
+
+const handleModalClose = () => {
+  isModalOpen.value = false;
+};
+
+const handleModalSuccess = async () => {
+  successMessage.value = 'Chuyên khoa đã được tạo thành công!';
+  await fetchSpecialties();
+  
+  // Clear success message after 5 seconds
+  setTimeout(() => {
+    successMessage.value = '';
+  }, 5000);
+};
+
+const handleEdit = (specialty: Specialty) => {
+  selectedSpecialty.value = specialty;
+  isEditModalOpen.value = true;
+};
+
+const handleEditModalClose = () => {
+  isEditModalOpen.value = false;
+  selectedSpecialty.value = null;
+};
+
+const handleEditModalSuccess = async () => {
+  successMessage.value = 'Chuyên khoa đã được cập nhật thành công!';
+  await fetchSpecialties();
+  
+  // Clear success message after 5 seconds
+  setTimeout(() => {
+    successMessage.value = '';
+  }, 5000);
 };
 </script>
 
@@ -53,6 +92,21 @@ const handleAdd = () => {
       @reload="fetchSpecialties"
       @add="handleAdd"
     />
+
+    <!-- Success Message -->
+    <Transition name="fade">
+      <div v-if="successMessage" class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center gap-3">
+          <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <h3 class="font-semibold text-green-800">Thành công</h3>
+            <p class="text-green-600">{{ successMessage }}</p>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Error State -->
     <div v-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -74,6 +128,37 @@ const handleAdd = () => {
     </div>
 
     <!-- Specialty List -->
-    <SpecialtyList :specialties="specialties" :loading="loading" />
+    <SpecialtyList 
+      :specialties="specialties" 
+      :loading="loading"
+      @edit="handleEdit"
+    />
+
+    <!-- Add Specialty Modal -->
+    <AddSpecialtyModal
+      :is-open="isModalOpen"
+      @close="handleModalClose"
+      @success="handleModalSuccess"
+    />
+
+    <!-- Edit Specialty Modal -->
+    <EditSpecialtyModal
+      :is-open="isEditModalOpen"
+      :specialty="selectedSpecialty"
+      @close="handleEditModalClose"
+      @success="handleEditModalSuccess"
+    />
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
