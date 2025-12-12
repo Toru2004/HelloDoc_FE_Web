@@ -2,7 +2,9 @@
 import UserList from "@/components/organisms/users/UserList.vue";
 import PageOverview from "@/components/molecules/PageOverview.vue";
 import AddUserModal from "@/components/modal/AddUserModal.vue";
-import type { CreateUserDto } from "@/domain/entities/user";
+import EditUserModal from "@/components/modal/EditUserModal.vue";
+import ConfirmActionModal from "@/components/modal/ConfirmActionModal.vue";
+import type { CreateUserDto, UpdateUserDto, User } from "@/domain/entities/user";
 
 definePageMeta({
   layout: "default",
@@ -12,11 +14,23 @@ useHead({
   title: 'Quản lý người dùng - HelloDoc',
 });
 
-const { users, filteredUsers, loading, error, fetchUsers, createUser } = useUserViewModel();
+const { users, filteredUsers, loading, error, fetchUsers, createUser, updateUser } = useUserViewModel();
 const { notifySuccess, notifyFailed } = useNotification();
 
-// Modal state
+// Modal states
 const isAddModalOpen = ref(false);
+const isEditModalOpen = ref(false);
+const isConfirmModalOpen = ref(false);
+const selectedUser = ref<User | null>(null);
+
+// Confirmation modal state
+const actionNeedToConfirm = ref<string>('');
+const confirmModalTitle = ref('');
+const confirmModalMessage = ref('');
+const confirmModalConfirmText = ref('Xác nhận');
+const confirmModalCancelText = ref('Hủy');
+const confirmModalButtonClass = ref('bg-blue-600 hover:bg-blue-700');
+const confirmModalIcon = ref<'warning' | 'info' | 'success' | 'error'>('info');
 
 // Fetch users on component mount
 onMounted(async () => {
@@ -44,8 +58,89 @@ const handleAddModalSubmit = async (userData: CreateUserDto) => {
   }
 };
 
+const handleEdit = (user: User) => {
+  selectedUser.value = user;
+  isEditModalOpen.value = true;
+};
+
+const handleEditModalClose = () => {
+  isEditModalOpen.value = false;
+  selectedUser.value = null;
+};
+
+// Store form data for confirmation
+const pendingEditFormData = ref<UpdateUserDto | null>(null);
+
+const handleEditModalSubmit = async (id: string, userData: UpdateUserDto) => {
+  // Store form data and show confirmation
+  pendingEditFormData.value = userData;
+  handleShowConfirmModal('edit', selectedUser.value!);
+};
+
+const handleEditConfirmed = async () => {
+  if (!selectedUser.value || !pendingEditFormData.value) return;
+  
+  try {
+    await updateUser(selectedUser.value._id, pendingEditFormData.value);
+    notifySuccess('Cập nhật người dùng thành công!');
+    isEditModalOpen.value = false;
+    pendingEditFormData.value = null;
+    await fetchUsers();
+  } catch (err: any) {
+    notifyFailed(err.message || 'Không thể cập nhật người dùng');
+  }
+};
+
 const handleReload = async () => {
   await fetchUsers();
+};
+
+// ===== CONFIRMATION HANDLERS =====
+const handleShowConfirmModal = (action: string, user?: User) => {
+  actionNeedToConfirm.value = action;
+  selectedUser.value = user || null;
+  
+  switch (action) {
+    case 'edit':
+      confirmModalTitle.value = 'Xác nhận cập nhật';
+      confirmModalMessage.value = `Bạn có chắc chắn muốn cập nhật thông tin người dùng <strong>${user?.name}</strong>?`;
+      confirmModalConfirmText.value = 'Cập nhật';
+      confirmModalCancelText.value = 'Hủy';
+      confirmModalButtonClass.value = 'bg-blue-600 hover:bg-blue-700';
+      confirmModalIcon.value = 'info';
+      break;
+    
+    // Add more cases here for other actions (e.g., delete)
+    default:
+      confirmModalTitle.value = 'Xác nhận';
+      confirmModalMessage.value = 'Bạn có chắc chắn muốn thực hiện hành động này?';
+      confirmModalConfirmText.value = 'Xác nhận';
+      confirmModalCancelText.value = 'Hủy';
+      confirmModalButtonClass.value = 'bg-blue-600 hover:bg-blue-700';
+      confirmModalIcon.value = 'info';
+  }
+  
+  isConfirmModalOpen.value = true;
+};
+
+const handleCloseConfirm = () => {
+  isConfirmModalOpen.value = false;
+  actionNeedToConfirm.value = '';
+  selectedUser.value = null;
+};
+
+const handleConfirm = async () => {
+  switch (actionNeedToConfirm.value) {
+    case 'edit':
+      await handleEditConfirmed();
+      break;
+    
+    // Add more cases here for other actions
+    default:
+      console.warn('Unknown action:', actionNeedToConfirm.value);
+  }
+  
+  handleCloseConfirm();
 };
 
 </script>
@@ -82,13 +177,38 @@ const handleReload = async () => {
     </div>
 
     <!-- User List Table -->
-    <UserList :users="filteredUsers" :loading="loading" />
+    <UserList 
+      :users="filteredUsers" 
+      :loading="loading"
+      @edit="handleEdit"
+    />
 
     <!-- Add User Modal -->
     <AddUserModal
       :is-open="isAddModalOpen"
       @close="handleAddModalClose"
       @submit="handleAddModalSubmit"
+    />
+
+    <!-- Edit User Modal -->
+    <EditUserModal
+      :is-open="isEditModalOpen"
+      :user="selectedUser"
+      @close="handleEditModalClose"
+      @submit="handleEditModalSubmit"
+    />
+
+    <!-- Confirm Action Modal -->
+    <ConfirmActionModal
+      :is-open="isConfirmModalOpen"
+      :title="confirmModalTitle"
+      :message="confirmModalMessage"
+      :confirm-text="confirmModalConfirmText"
+      :cancel-text="confirmModalCancelText"
+      :confirm-button-class="confirmModalButtonClass"
+      :icon="confirmModalIcon"
+      @close="handleCloseConfirm"
+      @confirm="handleConfirm"
     />
   </div>
 </template>

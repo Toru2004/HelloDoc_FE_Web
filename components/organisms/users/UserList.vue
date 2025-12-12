@@ -7,9 +7,15 @@ interface Props {
   loading?: boolean;
 }
 
+interface Emits {
+  (e: 'edit', user: User): void;
+}
+
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
 });
+
+const emit = defineEmits<Emits>();
 
 // Format date helper
 const formatDate = (dateString: string) => {
@@ -75,6 +81,64 @@ const renderDateCell = (row: User) => {
   return h('div', { class: 'text-sm text-gray-500' }, formatDate(row.createdAt));
 };
 
+const renderStatusCell = (row: User) => {
+  const isActive = !row.isDeleted;
+  const statusText = isActive ? 'Đang hoạt động' : 'Đã khóa';
+  const statusClass = isActive 
+    ? 'bg-green-50 text-green-700 border border-green-200' 
+    : 'bg-red-50 text-red-700 border border-red-200';
+  
+  // Icon for status
+  const iconPath = isActive
+    ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' // Check circle icon
+    : 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'; // X circle icon
+  
+  return h('div', { class: 'flex items-center' }, [
+    h('span', {
+      class: `inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${statusClass}`
+    }, [
+      h('svg', {
+        class: 'w-3.5 h-3.5',
+        fill: 'none',
+        viewBox: '0 0 24 24',
+        stroke: 'currentColor',
+        'stroke-width': '2'
+      }, [
+        h('path', {
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          d: iconPath
+        })
+      ]),
+      statusText
+    ])
+  ]);
+};
+
+const renderActionsCell = (row: User) => {
+  return h('div', { class: 'flex items-center gap-2' }, [
+    h('button', {
+      class: 'p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors',
+      title: 'Chỉnh sửa',
+      onClick: () => emit('edit', row)
+    }, [
+      h('svg', {
+        class: 'w-5 h-5',
+        fill: 'none',
+        viewBox: '0 0 24 24',
+        stroke: 'currentColor'
+      }, [
+        h('path', {
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          'stroke-width': '2',
+          d: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
+        })
+      ])
+    ])
+  ]);
+};
+
 // Define table columns with render functions
 const columns: TableColumn<User>[] = [
   {
@@ -106,6 +170,18 @@ const columns: TableColumn<User>[] = [
     label: 'Ngày tạo',
     align: 'left',
     render: renderDateCell as any,
+  },
+  {
+    key: 'status',
+    label: 'Trạng thái',
+    align: 'left',
+    render: renderStatusCell as any,
+  },
+  {
+    key: 'actions',
+    label: 'Thao tác',
+    align: 'center',
+    render: renderActionsCell as any,
   },
 ];
 </script>

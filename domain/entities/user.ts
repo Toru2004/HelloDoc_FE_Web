@@ -18,3 +18,10 @@ export interface CreateUserDto {
   phone: string;
   password: string;
 }
+
+export interface UpdateUserDto {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+}

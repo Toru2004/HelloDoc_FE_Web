@@ -1,6 +1,6 @@
 import { NuxtHttpClient } from '@/data/datasources/nuxt_http_client';
 import { UserRepositoryImpl } from '@/data/repositories/user_repository_impl';
-import type { User, CreateUserDto } from '@/domain/entities/user';
+import type { User, CreateUserDto, UpdateUserDto } from '@/domain/entities/user';
 
 export const useUserViewModel = () => {
   const client = new NuxtHttpClient();
@@ -45,6 +45,22 @@ export const useUserViewModel = () => {
     }
   };
 
+  const updateUser = async (id: string, userData: UpdateUserDto) => {
+    loading.value = true;
+    error.value = '';
+    try {
+      const updatedUser = await repository.update(id, userData);
+      console.log('Updated user:', updatedUser);
+      return updatedUser;
+    } catch (err: any) {
+      error.value = err.message || 'Không thể cập nhật người dùng';
+      console.error('Error updating user:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     users,
     filteredUsers,
@@ -52,5 +68,6 @@ export const useUserViewModel = () => {
     error,
     fetchUsers,
     createUser,
+    updateUser,
   };
 };
