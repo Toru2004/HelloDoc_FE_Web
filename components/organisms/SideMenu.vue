@@ -9,6 +9,7 @@ import {
   Activity,
   Settings,
   FileText,
+  Newspaper,
 } from "lucide-vue-next";
 
 const router = useRouter();
@@ -45,6 +46,12 @@ const menuItems = [
     path: "/posts", 
     icon: FileText,
     description: "Quản lý bài viết"
+  },
+  { 
+    label: "Tin tức", 
+    path: "/news", 
+    icon: Newspaper,
+    description: "Quản lý tin tức"
   },
   { 
     label: "Báo cáo", 
