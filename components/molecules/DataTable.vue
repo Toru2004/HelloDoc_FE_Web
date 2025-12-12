@@ -71,8 +71,8 @@ const getAlignClass = (align?: 'left' | 'center' | 'right') => {
 
     <!-- Data Table -->
     <div v-else-if="data.length > 0">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
+      <div class="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 w-full">
+        <table class="w-full table-auto divide-y divide-gray-200">
           <!-- Table Header -->
           <thead class="bg-gray-50">
             <tr>
@@ -80,7 +80,7 @@ const getAlignClass = (align?: 'left' | 'center' | 'right') => {
                 v-for="column in columns"
                 :key="column.key"
                 :class="[
-                  'px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider',
+                  'px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap',
                   getAlignClass(column.align)
                 ]"
                 :style="column.width ? { width: column.width } : {}"

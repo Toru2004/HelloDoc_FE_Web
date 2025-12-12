@@ -13,7 +13,7 @@ const toggleSidebar = () => {
   <div class="flex h-screen overflow-hidden">
     <!-- Sidebar -->
     <div
-      class="transition-all duration-300 ease-in-out bg-[#1E293B] text-white"
+      class="flex-shrink-0 transition-all duration-300 ease-in-out bg-[#1E293B] text-white"
       :class="isSidebarOpen ? 'w-64' : 'w-0'"
     >
       <SideMenu v-show="isSidebarOpen" />
@@ -21,14 +21,14 @@ const toggleSidebar = () => {
 
     <!-- Right content -->
     <div
-      class="flex flex-col flex-1 transition-all duration-300 ease-in-out"
+      class="flex flex-col flex-1 min-w-0 transition-all duration-300 ease-in-out"
       :class="isSidebarOpen ? 'ml-0' : 'ml-0'"
     >
       <!-- TopBar -->
       <TopBar @toggle="toggleSidebar" />
 
       <!-- Main content -->
-      <main class="flex-1 overflow-y-auto px-4 py-6 bg-gray-100">
+      <main class="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 bg-gray-100">
         <NuxtPage />
       </main>
     </div>
