@@ -25,6 +25,21 @@ export const usePostViewModel = () => {
     }
   };
 
+  const deletePost = async (id: string) => {
+    loading.value = true;
+    error.value = '';
+    try {
+      await repository.delete(id);
+      console.log('Deleted post:', id);
+    } catch (err: any) {
+      error.value = err.message || 'Không thể ẩn bài viết';
+      console.error('Error deleting post:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   // Auto-fetch on mount
   onMounted(() => {
     fetchPosts();
@@ -36,5 +51,6 @@ export const usePostViewModel = () => {
     loading,
     error,
     fetchPosts,
+    deletePost,
   };
 };

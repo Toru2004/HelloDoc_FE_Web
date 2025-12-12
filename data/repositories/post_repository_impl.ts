@@ -9,4 +9,8 @@ export class PostRepositoryImpl implements IPostRepository {
     const response = await this.client.get<{ posts: Post[] }>('/post');
     return response.posts;
   }
+
+  async delete(id: string): Promise<void> {
+    return await this.client.delete<void>(`/post/${id}`);
+  }
 }
