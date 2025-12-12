@@ -60,7 +60,8 @@ export const useAuthViewModel = () => {
             
         } catch (error: any) {
             console.error("Login error:", error);
-            errorMsg.value = error.message || "Sai email, mật khẩu hoặc mất kết nối mạng";
+            // Use the error message from API directly
+            errorMsg.value = error.message || "Đăng nhập thất bại. Vui lòng thử lại.";
         } finally {
             isLoading.value = false;
         }

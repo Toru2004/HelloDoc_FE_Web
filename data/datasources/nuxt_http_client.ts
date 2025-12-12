@@ -32,7 +32,8 @@ export class NuxtHttpClient implements IHttpClient {
                 headers,
             });
 
-            if (response.status === 401) {
+            // Don't redirect to login if we're already on the login endpoint
+            if (response.status === 401 && !endpoint.includes('/auth/login')) {
                 this.auth.clearAuth();
                 navigateTo('/auth/login');
                 throw new Error('Unauthorized - Token expired or invalid');

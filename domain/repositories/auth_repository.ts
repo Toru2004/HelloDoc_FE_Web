@@ -1,6 +1,7 @@
 export interface AuthResponse {
     accessToken: string;
     message: string;
+    error?: string;
 }
 
 export interface IAuthRepository {
