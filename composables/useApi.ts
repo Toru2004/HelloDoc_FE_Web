@@ -120,6 +120,104 @@ export const useApi = () => {
     };
 
     /**
+     * POST request with FormData (for file uploads)
+     */
+    const postFormData = async <T = any>(
+        endpoint: string,
+        formData: FormData,
+        options?: RequestInit
+    ): Promise<T> => {
+        const token = auth.getToken();
+        const url = `${baseURL}${endpoint}`;
+
+        const headers: Record<string, string> = {
+            ...(options?.headers as Record<string, string>),
+        };
+
+        // Add authorization header if token exists
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        // Don't set Content-Type - let browser set it with boundary for FormData
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                method: 'POST',
+                headers,
+                body: formData,
+            });
+
+            // Handle unauthorized responses
+            if (response.status === 401) {
+                auth.clearAuth();
+                navigateTo('/auth/login');
+                throw new Error('Unauthorized - Token expired or invalid');
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
+        }
+    };
+
+    /**
+     * PUT request with FormData (for file uploads)
+     */
+    const putFormData = async <T = any>(
+        endpoint: string,
+        formData: FormData,
+        options?: RequestInit
+    ): Promise<T> => {
+        const token = auth.getToken();
+        const url = `${baseURL}${endpoint}`;
+
+        const headers: Record<string, string> = {
+            ...(options?.headers as Record<string, string>),
+        };
+
+        // Add authorization header if token exists
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        // Don't set Content-Type - let browser set it with boundary for FormData
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                method: 'PUT',
+                headers,
+                body: formData,
+            });
+
+            // Handle unauthorized responses
+            if (response.status === 401) {
+                auth.clearAuth();
+                navigateTo('/auth/login');
+                throw new Error('Unauthorized - Token expired or invalid');
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
+        }
+    };
+
+    /**
      * Login method
      */
     const login = async (email: string, password: string) => {
@@ -144,6 +242,8 @@ export const useApi = () => {
         put,
         patch,
         delete: del,
+        postFormData,
+        putFormData,
         login,
         logout,
         baseURL,

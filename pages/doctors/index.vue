@@ -10,31 +10,12 @@ useHead({
   title: 'Quản lý bác sĩ - HelloDoc',
 });
 
-const api = useApi();
-const doctors = ref<Doctor[]>([]);
-const loading = ref(false);
-const error = ref('');
+const { doctors, loading, error, fetchDoctors } = useDoctorViewModel();
 
 // Fetch doctors on component mount
 onMounted(async () => {
   await fetchDoctors();
 });
-
-const fetchDoctors = async () => {
-  loading.value = true;
-  error.value = '';
-  
-  try {
-    const response = await api.get<Doctor[]>('/doctor/get-all');
-    doctors.value = response;
-    console.log('Fetched doctors:', response.length);
-  } catch (err: any) {
-    error.value = err.message || 'Không thể tải danh sách bác sĩ';
-    console.error('Error fetching doctors:', err);
-  } finally {
-    loading.value = false;
-  }
-};
 
 const handleAdd = () => {
   // TODO: Implement add doctor functionality
