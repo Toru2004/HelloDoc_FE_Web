@@ -3,7 +3,6 @@ import SidePanelModal from '@/components/molecules/SidePanelModal.vue';
 import FormInput from '@/components/atoms/FormInput.vue';
 import FormTextarea from '@/components/atoms/FormTextarea.vue';
 import FormFileUpload from '@/components/atoms/FormFileUpload.vue';
-import ConfirmActionModal from '@/components/modal/ConfirmActionModal.vue';
 
 interface Props {
   isOpen: boolean;
@@ -12,15 +11,11 @@ interface Props {
 
 interface Emits {
   (e: 'close'): void;
-  (e: 'success'): void;
+  (e: 'submit', id: string, formData: FormData): Promise<void>;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
-
-const { updateSpecialty } = useSpecialtyViewModel();
-const { notifySuccess, notifyFailed } = useNotification();
-const confirm = useConfirm();
 
 // Form state
 const formData = ref({
@@ -39,6 +34,12 @@ const errors = ref({
   icon: '',
 });
 
+// Original values for change detection
+const originalValues = ref({
+  name: '',
+  description: '',
+});
+
 // Watch for specialty changes to populate form
 watch(() => props.specialty, (newSpecialty) => {
   if (newSpecialty) {
@@ -47,8 +48,34 @@ watch(() => props.specialty, (newSpecialty) => {
     formData.value.icon = null;
     currentIcon.value = newSpecialty.icon || null;
     iconPreview.value = null;
+    
+    // Store original values
+    originalValues.value = {
+      name: newSpecialty.name,
+      description: newSpecialty.description || '',
+    };
   }
 }, { immediate: true });
+
+// Check if form is valid
+const isFormValid = computed(() => {
+  return formData.value.name.trim() !== '' &&
+         formData.value.description.trim() !== '';
+});
+
+// Check if form has changes
+const hasChanges = computed(() => {
+  const nameChanged = formData.value.name !== originalValues.value.name;
+  const descriptionChanged = formData.value.description !== originalValues.value.description;
+  const iconChanged = formData.value.icon !== null;
+  
+  return nameChanged || descriptionChanged || iconChanged;
+});
+
+// Disable submit if form is invalid or no changes
+const isSubmitDisabled = computed(() => {
+  return !isFormValid.value || !hasChanges.value;
+});
 
 // Validate form
 const validateForm = (): boolean => {
@@ -68,9 +95,9 @@ const validateForm = (): boolean => {
   return isValid;
 };
 
-// Actual update logic
-const performUpdate = async () => {
-  if (!props.specialty) return;
+// Submit form
+const handleSubmit = async () => {
+  if (!validateForm() || !props.specialty) return;
   
   loading.value = true;
   error.value = '';
@@ -83,36 +110,13 @@ const performUpdate = async () => {
       data.append('icon', formData.value.icon);
     }
     
-    await updateSpecialty(props.specialty._id, data);
-    
-    // Show success notification
-    notifySuccess('Cập nhật chuyên khoa thành công!');
-    
-    // Emit success and close
-    emit('success');
-    emit('close');
+    // Emit submit event for parent to handle
+    await emit('submit', props.specialty._id, data);
   } catch (err: any) {
     error.value = err.message || 'Không thể cập nhật chuyên khoa';
-    notifyFailed(error.value);
   } finally {
     loading.value = false;
   }
-};
-
-// Submit form - Show confirmation first
-const handleSubmit = async () => {
-  if (!validateForm() || !props.specialty) return;
-  
-  // Show confirmation dialog
-  confirm.confirm({
-    title: 'Xác nhận cập nhật',
-    message: `Bạn có chắc chắn muốn cập nhật chuyên khoa <strong>${props.specialty.name}</strong>?`,
-    confirmText: 'Cập nhật',
-    cancelText: 'Hủy',
-    confirmButtonClass: 'bg-blue-600 hover:bg-blue-700',
-    icon: 'info',
-    onConfirm: performUpdate,
-  });
 };
 
 // Handle close
@@ -132,6 +136,7 @@ const handleClose = () => {
     :is-open="isOpen && !!specialty"
     title="Chỉnh sửa chuyên khoa"
     :loading="loading"
+    :submit-disabled="isSubmitDisabled"
     submit-text="Cập nhật"
     form-id="edit-specialty-form"
     @close="handleClose"
@@ -181,17 +186,4 @@ const handleClose = () => {
       />
     </form>
   </SidePanelModal>
-
-  <!-- Confirmation Modal -->
-  <ConfirmActionModal
-    :is-open="confirm.isOpen.value"
-    :title="confirm.title.value"
-    :message="confirm.message.value"
-    :confirm-text="confirm.confirmText.value"
-    :cancel-text="confirm.cancelText.value"
-    :confirm-button-class="confirm.confirmButtonClass.value"
-    :icon="confirm.icon.value"
-    @close="confirm.handleCancel"
-    @confirm="confirm.handleConfirm"
-  />
 </template>

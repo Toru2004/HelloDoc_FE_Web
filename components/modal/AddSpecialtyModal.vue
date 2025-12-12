@@ -10,14 +10,11 @@ interface Props {
 
 interface Emits {
   (e: 'close'): void;
-  (e: 'success'): void;
+  (e: 'submit', formData: FormData): Promise<void>;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
-
-const { createSpecialty } = useSpecialtyViewModel();
-const { notifySuccess, notifyFailed } = useNotification();
 
 // Form state
 const formData = ref({
@@ -58,6 +55,13 @@ const validateForm = (): boolean => {
   return isValid;
 };
 
+// Check if form is valid (for disabling submit button)
+const isFormValid = computed(() => {
+  return formData.value.name.trim() !== '' &&
+         formData.value.description.trim() !== '' &&
+         formData.value.icon !== null;
+});
+
 // Submit form
 const handleSubmit = async () => {
   if (!validateForm()) return;
@@ -73,12 +77,10 @@ const handleSubmit = async () => {
       data.append('icon', formData.value.icon);
     }
     
-    await createSpecialty(data);
+    // Emit submit event for parent to handle
+    await emit('submit', data);
     
-    // Show success notification
-    notifySuccess('Thêm chuyên khoa thành công!');
-    
-    // Reset form
+    // Reset form on success
     formData.value = {
       name: '',
       description: '',
@@ -86,13 +88,8 @@ const handleSubmit = async () => {
     };
     iconPreview.value = null;
     errors.value = { name: '', description: '', icon: '' };
-    
-    // Emit success and close
-    emit('success');
-    emit('close');
   } catch (err: any) {
     error.value = err.message || 'Không thể tạo chuyên khoa';
-    notifyFailed(error.value);
   } finally {
     loading.value = false;
   }
@@ -120,6 +117,7 @@ const handleClose = () => {
     :is-open="isOpen"
     title="Thêm chuyên khoa mới"
     :loading="loading"
+    :submit-disabled="!isFormValid"
     submit-text="Tạo chuyên khoa"
     form-id="add-specialty-form"
     @close="handleClose"

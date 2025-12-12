@@ -6,6 +6,7 @@ interface Props {
   submitText?: string;
   cancelText?: string;
   formId?: string;
+  submitDisabled?: boolean;
 }
 
 interface Emits {
@@ -18,6 +19,7 @@ const props = withDefaults(defineProps<Props>(), {
   submitText: 'Lưu',
   cancelText: 'Hủy',
   formId: 'side-panel-form',
+  submitDisabled: false,
 });
 
 const emit = defineEmits<Emits>();
@@ -94,7 +96,7 @@ onUnmounted(() => {
               <button
                 type="submit"
                 :form="formId"
-                :disabled="loading"
+                :disabled="loading || submitDisabled"
                 class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
               >
                 <svg v-if="loading" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">

@@ -13,25 +13,48 @@ useHead({
   title: 'Quản lý chuyên khoa - HelloDoc',
 });
 
-const { specialties, loading, error, fetchSpecialties, deleteSpecialty } = useSpecialtyViewModel();
+const { specialties, loading, error, fetchSpecialties, createSpecialty, updateSpecialty, deleteSpecialty } = useSpecialtyViewModel();
 const { notifySuccess, notifyFailed } = useNotification();
-const confirm = useConfirm();
 
+// Modal states
 const isAddModalOpen = ref(false);
 const isEditModalOpen = ref(false);
+const isConfirmModalOpen = ref(false);
 const selectedSpecialty = ref<Specialty | null>(null);
+
+// Confirmation modal state
+const actionNeedToConfirm = ref<string>('');
+const confirmModalTitle = ref('');
+const confirmModalMessage = ref('');
+const confirmModalConfirmText = ref('Xác nhận');
+const confirmModalCancelText = ref('Hủy');
+const confirmModalButtonClass = ref('bg-blue-600 hover:bg-blue-700');
+const confirmModalIcon = ref<'warning' | 'info' | 'success' | 'error'>('info');
 
 // Fetch specialties on component mount
 onMounted(async () => {
   await fetchSpecialties();
 });
 
+// ===== MODAL HANDLERS =====
 const handleAdd = () => {
   isAddModalOpen.value = true;
 };
 
-const handleModalClose = () => {
+const handleAddModalClose = () => {
   isAddModalOpen.value = false;
+};
+
+const handleAddModalSubmit = async (formData: FormData) => {
+  try {
+    await createSpecialty(formData);
+    notifySuccess('Thêm chuyên khoa thành công!');
+    isAddModalOpen.value = false;
+    await fetchSpecialties();
+  } catch (err: any) {
+    notifyFailed(err.message || 'Không thể tạo chuyên khoa');
+    throw err;
+  }
 };
 
 const handleEdit = (specialty: Specialty) => {
@@ -44,36 +67,109 @@ const handleEditModalClose = () => {
   selectedSpecialty.value = null;
 };
 
+// Store form data for confirmation
+const pendingEditFormData = ref<FormData | null>(null);
+
+const handleEditModalSubmit = async (id: string, formData: FormData) => {
+  // Store form data and show confirmation
+  pendingEditFormData.value = formData;
+  handleShowConfirmModal('edit', selectedSpecialty.value!);
+};
+
+const handleEditConfirmed = async () => {
+  if (!selectedSpecialty.value || !pendingEditFormData.value) return;
+  
+  try {
+    await updateSpecialty(selectedSpecialty.value._id, pendingEditFormData.value);
+    notifySuccess('Cập nhật chuyên khoa thành công!');
+    isEditModalOpen.value = false;
+    pendingEditFormData.value = null;
+    await fetchSpecialties();
+  } catch (err: any) {
+    notifyFailed(err.message || 'Không thể cập nhật chuyên khoa');
+  }
+};
+
 const handleReload = async () => {
   await fetchSpecialties();
 };
 
-const handleDelete = (specialty: Specialty) => {
-  selectedSpecialty.value = specialty;
+// ===== CONFIRMATION HANDLERS =====
+const handleShowConfirmModal = (action: string, specialty?: Specialty) => {
+  actionNeedToConfirm.value = action;
+  selectedSpecialty.value = specialty || null;
   
-  // Use confirm composable
-  confirm.confirm({
-    title: 'Xác nhận xóa chuyên khoa',
-    message: `Bạn có chắc chắn muốn xóa chuyên khoa <strong>${specialty.name}</strong>?`,
-    confirmText: 'Xóa',
-    cancelText: 'Hủy',
-    confirmButtonClass: 'bg-red-600 hover:bg-red-700',
-    icon: 'warning',
-    onConfirm: async () => {
-      try {
-        await deleteSpecialty(specialty._id);
-        notifySuccess('Xóa chuyên khoa thành công!');
-        await handleReload();
-      } catch (err: any) {
-        notifyFailed(err.message || 'Không thể xóa chuyên khoa');
-      } finally {
-        selectedSpecialty.value = null;
-      }
-    },
-    onCancel: () => {
-      selectedSpecialty.value = null;
-    },
-  });
+  switch (action) {
+    case 'edit':
+      confirmModalTitle.value = 'Xác nhận cập nhật';
+      confirmModalMessage.value = `Bạn có chắc chắn muốn cập nhật chuyên khoa <strong>${specialty?.name}</strong>?`;
+      confirmModalConfirmText.value = 'Cập nhật';
+      confirmModalCancelText.value = 'Hủy';
+      confirmModalButtonClass.value = 'bg-blue-600 hover:bg-blue-700';
+      confirmModalIcon.value = 'info';
+      break;
+    
+    case 'delete':
+      confirmModalTitle.value = 'Xác nhận xóa chuyên khoa';
+      confirmModalMessage.value = `Bạn có chắc chắn muốn xóa chuyên khoa <strong>${specialty?.name}</strong>?`;
+      confirmModalConfirmText.value = 'Xóa';
+      confirmModalCancelText.value = 'Hủy';
+      confirmModalButtonClass.value = 'bg-red-600 hover:bg-red-700';
+      confirmModalIcon.value = 'warning';
+      break;
+    
+    // Add more cases here for other actions
+    default:
+      confirmModalTitle.value = 'Xác nhận';
+      confirmModalMessage.value = 'Bạn có chắc chắn muốn thực hiện hành động này?';
+      confirmModalConfirmText.value = 'Xác nhận';
+      confirmModalCancelText.value = 'Hủy';
+      confirmModalButtonClass.value = 'bg-blue-600 hover:bg-blue-700';
+      confirmModalIcon.value = 'info';
+  }
+  
+  isConfirmModalOpen.value = true;
+};
+
+const handleCloseConfirm = () => {
+  isConfirmModalOpen.value = false;
+  actionNeedToConfirm.value = '';
+  selectedSpecialty.value = null;
+};
+
+const handleConfirm = async () => {
+  switch (actionNeedToConfirm.value) {
+    case 'edit':
+      await handleEditConfirmed();
+      break;
+    
+    case 'delete':
+      await handleDeleteConfirmed();
+      break;
+    
+    // Add more cases here for other actions
+    default:
+      console.warn('Unknown action:', actionNeedToConfirm.value);
+  }
+  
+  handleCloseConfirm();
+};
+
+// ===== ACTION HANDLERS =====
+const handleDelete = (specialty: Specialty) => {
+  handleShowConfirmModal('delete', specialty);
+};
+
+const handleDeleteConfirmed = async () => {
+  if (!selectedSpecialty.value) return;
+  
+  try {
+    await deleteSpecialty(selectedSpecialty.value._id);
+    notifySuccess('Xóa chuyên khoa thành công!');
+    await fetchSpecialties();
+  } catch (err: any) {
+    notifyFailed(err.message || 'Không thể xóa chuyên khoa');
+  }
 };
 </script>
 
@@ -100,8 +196,8 @@ const handleDelete = (specialty: Specialty) => {
     <!-- Add Specialty Modal -->
     <AddSpecialtyModal
       :is-open="isAddModalOpen"
-      @close="handleModalClose"
-      @success="handleReload"
+      @close="handleAddModalClose"
+      @submit="handleAddModalSubmit"
     />
 
     <!-- Edit Specialty Modal -->
@@ -109,20 +205,20 @@ const handleDelete = (specialty: Specialty) => {
       :is-open="isEditModalOpen"
       :specialty="selectedSpecialty"
       @close="handleEditModalClose"
-      @success="handleReload"
+      @submit="handleEditModalSubmit"
     />
 
     <!-- Confirm Action Modal -->
     <ConfirmActionModal
-      :is-open="confirm.isOpen.value"
-      :title="confirm.title.value"
-      :message="confirm.message.value"
-      :confirm-text="confirm.confirmText.value"
-      :cancel-text="confirm.cancelText.value"
-      :confirm-button-class="confirm.confirmButtonClass.value"
-      :icon="confirm.icon.value"
-      @close="confirm.handleCancel"
-      @confirm="confirm.handleConfirm"
+      :is-open="isConfirmModalOpen"
+      :title="confirmModalTitle"
+      :message="confirmModalMessage"
+      :confirm-text="confirmModalConfirmText"
+      :cancel-text="confirmModalCancelText"
+      :confirm-button-class="confirmModalButtonClass"
+      :icon="confirmModalIcon"
+      @close="handleCloseConfirm"
+      @confirm="handleConfirm"
     />
   </div>
 </template>
