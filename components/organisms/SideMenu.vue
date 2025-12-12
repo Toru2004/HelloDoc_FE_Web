@@ -8,6 +8,7 @@ import {
   ClipboardList,
   Activity,
   Settings,
+  FileText,
 } from "lucide-vue-next";
 
 const router = useRouter();
@@ -38,6 +39,12 @@ const menuItems = [
     path: "/specialties", 
     icon: Activity,
     description: "Quản lý chuyên khoa"
+  },
+  { 
+    label: "Bài viết", 
+    path: "/posts", 
+    icon: FileText,
+    description: "Quản lý bài viết"
   },
   { 
     label: "Báo cáo", 
