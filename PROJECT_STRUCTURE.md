@@ -1,4 +1,4 @@
-# Cấu trúc thư mục HelloDoc Admin - NuxtJS
+# Cấu trúc thư mục HelloDoc Admin - Clean Architecture
 
 ## 📁 Tổng quan cấu trúc
 
@@ -8,238 +8,522 @@ HelloDoc_FE_Web/
 ├── node_modules/             # Dependencies (không commit)
 ├── public/                   # Static assets
 │   └── logo_hellodoc.png    # Logo ứng dụng
-├── components/              # Vue components
-│   ├── atoms/               # Atomic components (nhỏ nhất)
+│
+├── domain/                   # 🔵 DOMAIN LAYER - Business Logic
+│   ├── entities/            # Business entities (models)
+│   │   ├── user.ts
+│   │   ├── doctor.ts
+│   │   └── specialty.ts
+│   └── repositories/        # Repository interfaces (contracts)
+│       ├── auth_repository.ts
+│       ├── user_repository.ts
+│       ├── doctor_repository.ts
+│       └── specialty_repository.ts
+│
+├── data/                     # 🟢 DATA LAYER - Implementation
+│   ├── datasources/         # HTTP clients & data sources
+│   │   ├── http_client.ts          # Interface định nghĩa HTTP methods
+│   │   └── nuxt_http_client.ts     # Implementation với $fetch
+│   └── repositories/        # Repository implementations
+│       ├── auth_repository_impl.ts
+│       ├── user_repository_impl.ts
+│       ├── doctor_repository_impl.ts
+│       └── specialty_repository_impl.ts
+│
+├── composables/              # 🟡 PRESENTATION LAYER - ViewModels
+│   ├── useAuthViewModel.ts        # Auth logic + state
+│   ├── useUserViewModel.ts        # User management logic
+│   ├── useDoctorViewModel.ts      # Doctor management logic
+│   ├── useSpecialtyViewModel.ts   # Specialty management logic
+│   ├── useAuth.ts                 # Auth utilities (localStorage)
+│   └── useApi.ts                  # Legacy API service (đang migrate)
+│
+├── components/              # Vue components (Presentation)
+│   ├── atoms/               # Atomic components
+│   │   └── Loading.vue
 │   └── organisms/           # Complex components
-│       ├── dashboard/       # Dashboard components
-│       ├── doctors/         # Doctor management components
-│       ├── reports/         # Report management components
-│       ├── specialties/     # Specialty management components
-│       ├── users/           # User management components
-│       ├── SideMenu.vue     # Sidebar navigation
-│       └── TopBar.vue       # Top navigation bar
-├── composables/             # Reusable composition functions
-│   ├── useApi.ts           # API service (HTTP methods)
-│   └── useAuth.ts          # Authentication utilities
-├── layouts/                 # Page layouts
-│   ├── auth.vue            # Layout cho trang login
-│   └── default.vue         # Layout mặc định (có sidebar + topbar)
-├── middleware/              # Route middleware
-│   └── auth.global.ts      # Global auth middleware (JWT validation)
+│       ├── dashboard/
+│       ├── doctors/
+│       ├── specialties/
+│       ├── users/
+│       ├── SideMenu.vue
+│       └── TopBar.vue
+│
 ├── pages/                   # File-based routing
-│   ├── auth/
-│   │   └── login.vue       # Trang đăng nhập
-│   ├── dashboard/
-│   │   └── index.vue       # Trang dashboard (fetch data)
-│   ├── doctors/
-│   │   └── index.vue       # Quản lý bác sĩ
-│   ├── reports/
-│   │   └── index.vue       # Quản lý báo cáo
-│   ├── specialties/
-│   │   └── index.vue       # Quản lý chuyên khoa
-│   ├── users/
-│   │   └── index.vue       # Quản lý người dùng
-│   └── index.vue           # Root page (redirect to dashboard)
+│   ├── auth/login.vue
+│   ├── dashboard/index.vue
+│   ├── doctors/index.vue
+│   ├── specialties/index.vue
+│   ├── users/index.vue
+│   └── index.vue
+│
+├── layouts/                 # Page layouts
+│   ├── auth.vue
+│   └── default.vue
+│
+├── middleware/              # Route middleware
+│   └── auth.global.ts
+│
 ├── utils/                   # Utility functions
-│   └── jwt.ts              # JWT decode, validation utilities
-├── .env                     # Environment variables (không commit)
-├── .env.example            # Template cho .env
+│   └── jwt.ts
+│
+├── .env                     # Environment variables
 ├── nuxt.config.ts          # Nuxt configuration
-├── package.json            # Dependencies & scripts
-├── tsconfig.json           # TypeScript configuration
-└── API_USAGE.md            # Hướng dẫn sử dụng API service
+├── package.json            # Dependencies
+└── tsconfig.json           # TypeScript config
 ```
 
 ---
 
-## 📂 Chi tiết từng thư mục
+## 🏗️ Clean Architecture - 3 Layers
 
-### 1. **`public/`** - Static Assets
-Chứa các file tĩnh được serve trực tiếp.
-
+### **Nguyên tắc phân tầng:**
 ```
-public/
-├── logo_hellodoc.png       # Logo chính của ứng dụng
-├── favicon.ico             # Icon trình duyệt
-└── robots.txt              # SEO configuration
+┌─────────────────────────────────────┐
+│   PRESENTATION LAYER (ViewModels)  │  ← UI Logic, State Management
+│   composables/, pages/, components │
+└──────────────┬──────────────────────┘
+               │ depends on
+┌──────────────▼──────────────────────┐
+│      DATA LAYER (Implementations)   │  ← API calls, HTTP clients
+│   data/datasources, data/repos     │
+└──────────────┬──────────────────────┘
+               │ implements
+┌──────────────▼──────────────────────┐
+│     DOMAIN LAYER (Contracts)        │  ← Business rules, Interfaces
+│   domain/entities, domain/repos    │
+└─────────────────────────────────────┘
 ```
 
-**Lưu ý:** File trong `public/` được truy cập bằng `/filename` (ví dụ: `/logo_hellodoc.png`)
+**Dependency Rule:**
+- Presentation → Data → Domain
+- Domain layer **KHÔNG** phụ thuộc vào bất kỳ layer nào
+- Data layer chỉ phụ thuộc vào Domain
+- Presentation layer phụ thuộc vào cả Data và Domain
 
 ---
 
-### 2. **`components/`** - Vue Components
+## 📂 Chi tiết từng Layer
 
-#### **Atomic Design Pattern**
-Dự án sử dụng Atomic Design để tổ chức components:
+### 🔵 **1. DOMAIN LAYER** - Business Logic Core
 
-```
-components/
-├── atoms/                  # Components nhỏ nhất, không thể chia nhỏ hơn
-│   └── Loading.vue        # Loading spinner
-│
-└── organisms/             # Components phức tạp, kết hợp nhiều atoms/molecules
-    ├── dashboard/
-    │   └── Infomation.vue      # Dashboard UI (nhận props từ page)
-    │
-    ├── doctors/
-    │   └── DoctorList.vue      # Bảng danh sách bác sĩ
-    │
-    ├── reports/
-    │   └── ReportList.vue      # Bảng danh sách báo cáo
-    │
-    ├── specialties/
-    │   └── SpecialtyList.vue   # Bảng danh sách chuyên khoa
-    │
-    ├── users/
-    │   └── UserList.vue        # Bảng danh sách người dùng
-    │
-    ├── SideMenu.vue           # Sidebar navigation với menu items
-    └── TopBar.vue             # Top bar với logout button
-```
+#### **`domain/entities/`** - Business Entities
+Định nghĩa các model thuần túy, không phụ thuộc framework.
 
-**Quy tắc:**
-- **Atoms**: Button, Input, Icon, Badge...
-- **Molecules**: SearchBar, Card, FormField...
-- **Organisms**: Header, Sidebar, Table, Form...
-
----
-
-### 3. **`composables/`** - Composition Functions
-
-Chứa các reusable logic sử dụng Composition API.
-
-```
-composables/
-├── useApi.ts              # API service với HTTP methods
-│   ├── get<T>(endpoint)
-│   ├── post<T>(endpoint, data)
-│   ├── put<T>(endpoint, data)
-│   ├── patch<T>(endpoint, data)
-│   ├── delete<T>(endpoint)
-│   ├── login(email, password)
-│   └── logout()
-│
-└── useAuth.ts             # Authentication utilities
-    ├── saveAuth(token, userInfo)
-    ├── getToken()
-    ├── getUserInfo()
-    ├── clearAuth()
-    ├── isAuthenticated()
-    └── isUserAdmin()
-```
-
-**Cách sử dụng:**
 ```typescript
-const api = useApi();
-const auth = useAuth();
-
-// Fetch data
-const users = await api.get('/user');
-
-// Check auth
-if (auth.isAuthenticated()) {
-  // ...
+// domain/entities/user.ts
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  role: string;
+  avatarURL?: string;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 ```
 
----
-
-### 4. **`layouts/`** - Page Layouts
-
-Định nghĩa layout cho các trang.
-
+**Cấu trúc:**
 ```
-layouts/
-├── auth.vue               # Layout cho trang login (không có sidebar)
-└── default.vue            # Layout mặc định (có SideMenu + TopBar)
+domain/entities/
+├── user.ts          # User entity
+├── doctor.ts        # Doctor entity (extends User)
+└── specialty.ts     # Specialty entity
 ```
 
-**Sử dụng trong page:**
+#### **`domain/repositories/`** - Repository Interfaces
+Định nghĩa **contracts** (interface) cho các repository.
+
 ```typescript
-definePageMeta({
-  layout: "default" // hoặc "auth"
-});
+// domain/repositories/user_repository.ts
+import type { User } from '../entities/user';
+
+export interface IUserRepository {
+  getAll(): Promise<User[]>;
+  getById(id: string): Promise<User>;
+  create(user: User): Promise<User>;
+  update(id: string, user: Partial<User>): Promise<User>;
+  delete(id: string): Promise<void>;
+}
 ```
+
+**Cấu trúc:**
+```
+domain/repositories/
+├── auth_repository.ts       # Authentication contract
+├── user_repository.ts       # User CRUD contract
+├── doctor_repository.ts     # Doctor CRUD contract
+└── specialty_repository.ts  # Specialty CRUD contract
+```
+
+**Lợi ích:**
+- ✅ Tách biệt business logic khỏi implementation
+- ✅ Dễ dàng mock cho testing
+- ✅ Có thể swap implementation (REST API → GraphQL)
 
 ---
 
-### 5. **`middleware/`** - Route Middleware
+### 🟢 **2. DATA LAYER** - Implementation
 
-Xử lý logic trước khi render page.
+#### **`data/datasources/`** - HTTP Clients
 
+**`http_client.ts`** - Interface cho HTTP operations:
+```typescript
+export interface IHttpClient {
+  get<T>(url: string, options?: RequestOptions): Promise<T>;
+  post<T>(url: string, data?: any, options?: RequestOptions): Promise<T>;
+  put<T>(url: string, data?: any, options?: RequestOptions): Promise<T>;
+  patch<T>(url: string, data?: any, options?: RequestOptions): Promise<T>;
+  delete<T>(url: string, options?: RequestOptions): Promise<T>;
+  postFormData<T>(url: string, formData: FormData): Promise<T>;
+}
 ```
-middleware/
-└── auth.global.ts         # Global middleware cho authentication
-    ├── Kiểm tra JWT token
-    ├── Validate admin role
-    ├── Redirect nếu chưa login
-    └── Redirect nếu không phải admin
+
+**`nuxt_http_client.ts`** - Implementation với Nuxt `$fetch`:
+```typescript
+export class NuxtHttpClient implements IHttpClient {
+  private baseURL: string;
+  
+  async get<T>(url: string, options?: RequestOptions): Promise<T> {
+    return await $fetch<T>(url, {
+      baseURL: this.baseURL,
+      method: 'GET',
+      headers: this.getHeaders(),
+      ...options
+    });
+  }
+  // ... other methods
+}
 ```
 
-**Flow:**
-1. User truy cập route
-2. Middleware kiểm tra token trong localStorage
-3. Decode JWT và validate
-4. Kiểm tra role === "admin"
-5. Cho phép truy cập hoặc redirect về `/auth/login`
+**Cấu trúc:**
+```
+data/datasources/
+├── http_client.ts         # Interface
+└── nuxt_http_client.ts    # Nuxt implementation
+```
+
+#### **`data/repositories/`** - Repository Implementations
+
+Implement các interface từ `domain/repositories/`.
+
+```typescript
+// data/repositories/user_repository_impl.ts
+import type { IUserRepository } from '@/domain/repositories/user_repository';
+import type { User } from '@/domain/entities/user';
+import type { IHttpClient } from '@/data/datasources/http_client';
+
+export class UserRepositoryImpl implements IUserRepository {
+  constructor(private client: IHttpClient) {}
+
+  async getAll(): Promise<User[]> {
+    return await this.client.get<User[]>('/user');
+  }
+
+  async getById(id: string): Promise<User> {
+    return await this.client.get<User>(`/user/${id}`);
+  }
+  
+  // ... other methods
+}
+```
+
+**Cấu trúc:**
+```
+data/repositories/
+├── auth_repository_impl.ts       # Auth implementation
+├── user_repository_impl.ts       # User CRUD implementation
+├── doctor_repository_impl.ts     # Doctor CRUD implementation
+└── specialty_repository_impl.ts  # Specialty CRUD implementation
+```
+
+**Lợi ích:**
+- ✅ Tách biệt HTTP logic khỏi business logic
+- ✅ Dễ dàng test với mock HTTP client
+- ✅ Có thể thay đổi data source (API → Local Storage)
 
 ---
 
-### 6. **`pages/`** - File-based Routing
+### 🟡 **3. PRESENTATION LAYER** - ViewModels & UI
 
-NuxtJS tự động tạo routes dựa trên cấu trúc file.
+#### **`composables/`** - ViewModels
+
+ViewModels quản lý state và logic cho UI, sử dụng repositories.
+
+```typescript
+// composables/useAuthViewModel.ts
+import { NuxtHttpClient } from '@/data/datasources/nuxt_http_client';
+import { AuthRepositoryImpl } from '@/data/repositories/auth_repository_impl';
+
+export const useAuthViewModel = () => {
+  // 1. Setup dependencies
+  const client = new NuxtHttpClient();
+  const repository = new AuthRepositoryImpl(client);
+  const auth = useAuth(); // localStorage helper
+  const router = useRouter();
+
+  // 2. State
+  const email = ref("");
+  const password = ref("");
+  const errorMsg = ref("");
+  const isLoading = ref(false);
+
+  // 3. Actions
+  const handleLogin = async () => {
+    isLoading.value = true;
+    try {
+      const data = await repository.login(email.value, password.value);
+      
+      // Validate & save auth
+      const userInfo = decodeJWT(data.accessToken);
+      if (!isAdmin(data.accessToken)) {
+        errorMsg.value = "Tài khoản không phải admin";
+        return;
+      }
+      
+      auth.saveAuth(data.accessToken, userInfo);
+      router.push("/dashboard");
+      
+    } catch (error: any) {
+      errorMsg.value = error.message || "Đăng nhập thất bại";
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  // 4. Return state & actions
+  return {
+    email,
+    password,
+    errorMsg,
+    isLoading,
+    handleLogin
+  };
+};
+```
+
+**Cấu trúc:**
+```
+composables/
+├── useAuthViewModel.ts        # Auth state + login logic
+├── useUserViewModel.ts        # User list + CRUD logic
+├── useDoctorViewModel.ts      # Doctor list + CRUD logic
+├── useSpecialtyViewModel.ts   # Specialty list + CRUD logic
+├── useAuth.ts                 # Auth utilities (localStorage)
+└── useApi.ts                  # Legacy (đang migrate sang Clean Arch)
+```
+
+**Pattern sử dụng trong Page:**
+```vue
+<!-- pages/auth/login.vue -->
+<script setup lang="ts">
+const {
+  email,
+  password,
+  errorMsg,
+  isLoading,
+  handleLogin
+} = useAuthViewModel();
+</script>
+
+<template>
+  <form @submit.prevent="handleLogin">
+    <input v-model="email" type="email" />
+    <input v-model="password" type="password" />
+    <button :disabled="isLoading">Đăng nhập</button>
+    <p v-if="errorMsg">{{ errorMsg }}</p>
+  </form>
+</template>
+```
+
+#### **`pages/`** - File-based Routing
+
+Pages chỉ làm nhiệm vụ:
+1. Gọi ViewModel
+2. Render UI components
+3. Pass data xuống components
 
 ```
 pages/
 ├── index.vue                    → /
-├── auth/
-│   └── login.vue               → /auth/login
-├── dashboard/
-│   └── index.vue               → /dashboard
-├── doctors/
-│   └── index.vue               → /doctors
-├── reports/
-│   └── index.vue               → /reports
-├── specialties/
-│   └── index.vue               → /specialties
-└── users/
-    └── index.vue               → /users
+├── auth/login.vue              → /auth/login
+├── dashboard/index.vue         → /dashboard
+├── doctors/index.vue           → /doctors
+├── specialties/index.vue       → /specialties
+└── users/index.vue             → /users
 ```
 
-**Vai trò của mỗi page:**
-- **`index.vue`**: Redirect về `/dashboard`
-- **`auth/login.vue`**: Đăng nhập, gọi API `/auth/login`
-- **`dashboard/index.vue`**: Fetch data từ 4 APIs, truyền props xuống component
-- **`doctors/index.vue`**: Fetch `/doctor/get-all`, hiển thị bảng
-- **`users/index.vue`**: Fetch `/user`, filter role=User
-- **`specialties/index.vue`**: Fetch `/specialty/get-all`
-- **`reports/index.vue`**: Fetch `/report`
+#### **`components/`** - Presentation Components
+
+Sử dụng **Atomic Design Pattern**:
+
+```
+components/
+├── atoms/                  # Nhỏ nhất, không chia nhỏ hơn
+│   └── Loading.vue
+│
+└── organisms/             # Components phức tạp
+    ├── dashboard/
+    │   └── Infomation.vue
+    ├── doctors/
+    │   └── DoctorList.vue
+    ├── specialties/
+    │   └── SpecialtyList.vue
+    ├── users/
+    │   └── UserList.vue
+    ├── SideMenu.vue
+    └── TopBar.vue
+```
 
 ---
 
-### 7. **`utils/`** - Utility Functions
+## 🔄 Data Flow trong Clean Architecture
 
-Chứa các helper functions thuần túy.
+### **Luồng dữ liệu hoàn chỉnh:**
 
 ```
-utils/
-└── jwt.ts
-    ├── decodeJWT(token)           # Decode JWT token
-    ├── isTokenExpired(token)      # Kiểm tra token hết hạn
-    └── isAdmin(token)             # Kiểm tra role admin
+┌─────────────────────────────────────────────────────────────┐
+│ 1. USER ACTION                                              │
+│    pages/auth/login.vue                                     │
+│    User clicks "Đăng nhập"                                  │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 2. VIEWMODEL (Presentation Layer)                           │
+│    composables/useAuthViewModel.ts                          │
+│    handleLogin() → validate input                           │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 3. REPOSITORY IMPLEMENTATION (Data Layer)                   │
+│    data/repositories/auth_repository_impl.ts                │
+│    login(email, password) → call HTTP client                │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 4. HTTP CLIENT (Data Layer)                                 │
+│    data/datasources/nuxt_http_client.ts                     │
+│    POST /auth/login → API call                              │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 5. BACKEND API                                              │
+│    Returns: { accessToken: "..." }                          │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 6. RESPONSE FLOWS BACK                                      │
+│    HTTP Client → Repository → ViewModel                     │
+│    ViewModel processes: decode JWT, validate admin          │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 7. UPDATE UI STATE                                          │
+│    ViewModel updates: isLoading, errorMsg                   │
+│    Page re-renders automatically (Vue reactivity)           │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**Ví dụ:**
+---
+
+## 🎯 Ví dụ thực tế: Feature "Quản lý Chuyên khoa"
+
+### **1. Domain Layer**
+
 ```typescript
-import { decodeJWT, isTokenExpired, isAdmin } from '~/utils/jwt';
-
-const token = 'eyJhbGc...';
-const payload = decodeJWT(token);
-
-if (!isTokenExpired(token) && isAdmin(token)) {
-  // User is valid admin
+// domain/entities/specialty.ts
+export interface Specialty {
+  _id: string;
+  name: string;
+  description: string;
+  imageURL?: string;
 }
+
+// domain/repositories/specialty_repository.ts
+export interface ISpecialtyRepository {
+  getAll(): Promise<Specialty[]>;
+  create(specialty: Specialty): Promise<Specialty>;
+  update(id: string, specialty: Partial<Specialty>): Promise<Specialty>;
+  delete(id: string): Promise<void>;
+}
+```
+
+### **2. Data Layer**
+
+```typescript
+// data/repositories/specialty_repository_impl.ts
+export class SpecialtyRepositoryImpl implements ISpecialtyRepository {
+  constructor(private client: IHttpClient) {}
+
+  async getAll(): Promise<Specialty[]> {
+    return await this.client.get<Specialty[]>('/specialty/get-all');
+  }
+
+  async create(specialty: Specialty): Promise<Specialty> {
+    return await this.client.post<Specialty>('/specialty', specialty);
+  }
+  
+  // ... other methods
+}
+```
+
+### **3. Presentation Layer**
+
+```typescript
+// composables/useSpecialtyViewModel.ts
+export const useSpecialtyViewModel = () => {
+  const client = new NuxtHttpClient();
+  const repository = new SpecialtyRepositoryImpl(client);
+
+  const specialties = ref<Specialty[]>([]);
+  const isLoading = ref(false);
+  const error = ref("");
+
+  const fetchSpecialties = async () => {
+    isLoading.value = true;
+    try {
+      specialties.value = await repository.getAll();
+    } catch (e: any) {
+      error.value = e.message;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  return {
+    specialties,
+    isLoading,
+    error,
+    fetchSpecialties
+  };
+};
+```
+
+```vue
+<!-- pages/specialties/index.vue -->
+<script setup lang="ts">
+const { specialties, isLoading, fetchSpecialties } = useSpecialtyViewModel();
+
+onMounted(() => {
+  fetchSpecialties();
+});
+</script>
+
+<template>
+  <div>
+    <Loading v-if="isLoading" />
+    <SpecialtyList v-else :specialties="specialties" />
+  </div>
+</template>
 ```
 
 ---
@@ -247,8 +531,6 @@ if (!isTokenExpired(token) && isAdmin(token)) {
 ## 🔧 Configuration Files
 
 ### **`nuxt.config.ts`**
-Cấu hình chính của Nuxt app.
-
 ```typescript
 export default defineNuxtConfig({
   runtimeConfig: {
@@ -260,200 +542,155 @@ export default defineNuxtConfig({
 });
 ```
 
-### **`.env`** (không commit)
+### **`.env`**
 ```env
 NUXT_PUBLIC_API_BASE_URL=http://localhost:4000
 ```
-
-### **`.env.example`** (commit)
-Template cho `.env` file.
 
 ---
 
 ## 🌐 API Endpoints
 
-Tất cả API được gọi qua `useApi()` composable:
-
-| Endpoint | Method | Mục đích |
-|----------|--------|----------|
-| `/auth/login` | POST | Đăng nhập, nhận JWT token |
-| `/user` | GET | Lấy danh sách users |
-| `/doctor/get-all` | GET | Lấy danh sách bác sĩ |
-| `/specialty/get-all` | GET | Lấy danh sách chuyên khoa |
-| `/report` | GET | Lấy danh sách báo cáo |
-
----
-
-## 🔐 Authentication Flow
-
-```
-1. User nhập email/password → pages/auth/login.vue
-2. Call API /auth/login → nhận accessToken (JWT)
-3. Decode JWT → lấy user info (name, email, role)
-4. Validate role === "admin"
-5. Save token + userInfo → localStorage (useAuth.saveAuth)
-6. Redirect → /dashboard
-7. Mọi request sau → auto inject Authorization header (useApi)
-8. Middleware kiểm tra token trước mỗi route
-```
-
----
-
-## 📊 Data Flow Pattern
-
-### **Parent-Child Props Pattern**
-
-```
-Page (Data Layer)
-  ├── Fetch API
-  ├── Process data
-  └── Pass props to Component
-
-Component (Presentation Layer)
-  ├── Receive props
-  ├── Display UI
-  └── Emit events (optional)
-```
-
-**Ví dụ: Dashboard**
-```
-pages/dashboard/index.vue
-  ├── fetchStats() → gọi 4 APIs
-  ├── totalUsers, totalDoctors, ...
-  └── <Infomation :total-users="totalUsers" ... />
-
-components/organisms/dashboard/Infomation.vue
-  ├── defineProps<Props>()
-  ├── Hiển thị stats cards
-  └── Hiển thị quick actions
-```
-
----
-
-## 🎨 UI/UX Patterns
-
-### **Color Scheme**
-- **Primary**: Blue (#3B82F6)
-- **Secondary**: Purple (#A855F7)
-- **Success**: Green (#10B981)
-- **Warning**: Yellow (#F59E0B)
-- **Danger**: Red (#EF4444)
-
-### **Component States**
-Mọi component list đều có 3 states:
-1. **Loading**: Spinner animation
-2. **Data**: Hiển thị table/cards
-3. **Empty**: "Không có dữ liệu"
-4. **Error**: Hiển thị lỗi + nút "Thử lại"
+| Endpoint | Method | Repository |
+|----------|--------|------------|
+| `/auth/login` | POST | AuthRepository |
+| `/user` | GET | UserRepository |
+| `/doctor/get-all` | GET | DoctorRepository |
+| `/specialty/get-all` | GET | SpecialtyRepository |
+| `/report` | GET | ReportRepository |
 
 ---
 
 ## 📝 Naming Conventions
 
 ### **Files**
-- **Components**: PascalCase (`UserList.vue`, `TopBar.vue`)
-- **Pages**: kebab-case (`index.vue`, `login.vue`)
-- **Composables**: camelCase với prefix `use` (`useApi.ts`, `useAuth.ts`)
-- **Utils**: camelCase (`jwt.ts`)
+- **Entities**: `user.ts`, `doctor.ts` (lowercase)
+- **Repository Interfaces**: `user_repository.ts` (snake_case)
+- **Repository Implementations**: `user_repository_impl.ts` (snake_case + _impl)
+- **ViewModels**: `useUserViewModel.ts` (camelCase + use prefix)
+- **Components**: `UserList.vue` (PascalCase)
 
-### **Variables**
-- **Refs**: camelCase (`totalUsers`, `loading`)
-- **Props**: camelCase (`totalUsers`, `verifiedDoctors`)
-- **Functions**: camelCase (`fetchStats`, `handleLogin`)
-- **Constants**: UPPER_SNAKE_CASE (`API_BASE_URL`)
-
-### **Routes**
-- Plural nouns: `/users`, `/doctors`, `/specialties`, `/reports`
-- Singular cho actions: `/auth/login`
+### **Classes & Interfaces**
+- **Interfaces**: `IUserRepository`, `IHttpClient` (I prefix)
+- **Classes**: `UserRepositoryImpl`, `NuxtHttpClient` (PascalCase)
+- **Entities**: `User`, `Doctor` (PascalCase)
 
 ---
 
 ## 🚀 Development Workflow
 
-### **1. Tạo trang mới**
+### **Thêm feature mới (ví dụ: Reports)**
+
+#### **Bước 1: Domain Layer**
 ```bash
-# 1. Tạo page
-pages/new-feature/index.vue
+# 1. Tạo entity
+domain/entities/report.ts
 
-# 2. Tạo component (nếu cần)
-components/organisms/new-feature/FeatureList.vue
+# 2. Tạo repository interface
+domain/repositories/report_repository.ts
+```
 
-# 3. Update sidebar menu
+#### **Bước 2: Data Layer**
+```bash
+# 3. Tạo repository implementation
+data/repositories/report_repository_impl.ts
+```
+
+#### **Bước 3: Presentation Layer**
+```bash
+# 4. Tạo ViewModel
+composables/useReportViewModel.ts
+
+# 5. Tạo page
+pages/reports/index.vue
+
+# 6. Tạo component (nếu cần)
+components/organisms/reports/ReportList.vue
+```
+
+#### **Bước 4: Update Navigation**
+```bash
+# 7. Update sidebar menu
 components/organisms/SideMenu.vue
 ```
-
-### **2. Thêm API mới**
-```typescript
-// Trong page
-const data = await api.get('/new-endpoint');
-
-// Hoặc thêm method vào useApi.ts nếu cần custom logic
-```
-
-### **3. Thêm route protection**
-Middleware `auth.global.ts` tự động bảo vệ tất cả routes trừ `/auth/login`.
 
 ---
 
 ## 📚 Best Practices
 
-### **1. Component Organization**
-- ✅ Tách logic (page) và UI (component)
-- ✅ Sử dụng props để truyền data
-- ✅ Emit events cho user actions
-- ✅ Keep components focused và reusable
+### **1. Dependency Injection**
+- ✅ ViewModel tạo instance của Repository
+- ✅ Repository nhận HttpClient qua constructor
+- ✅ Dễ dàng mock cho testing
 
-### **2. API Calls**
-- ✅ Luôn dùng `useApi()` composable
-- ✅ Gọi API ở page level, không ở component
-- ✅ Handle loading và error states
-- ✅ Type-safe với TypeScript generics
+### **2. Single Responsibility**
+- ✅ Entity: chỉ chứa data structure
+- ✅ Repository: chỉ handle data operations
+- ✅ ViewModel: chỉ handle UI logic + state
+- ✅ Component: chỉ render UI
 
-### **3. State Management**
-- ✅ Dùng `ref()` cho reactive data
-- ✅ Dùng `computed()` cho derived state
-- ✅ localStorage cho auth data (qua useAuth)
-- ✅ Props cho parent-child communication
+### **3. Type Safety**
+- ✅ Sử dụng TypeScript interfaces
+- ✅ Generic types cho HTTP methods
+- ✅ Strict type checking
 
-### **4. Security**
-- ✅ JWT token trong localStorage
-- ✅ Auto logout khi token expired
-- ✅ Middleware kiểm tra admin role
-- ✅ Authorization header tự động inject
+### **4. Error Handling**
+- ✅ Repository throw errors
+- ✅ ViewModel catch và xử lý
+- ✅ UI hiển thị error messages
+
+### **5. State Management**
+- ✅ ViewModel quản lý local state
+- ✅ Pinia/Store cho global state (nếu cần)
+- ✅ localStorage cho persistence (auth)
 
 ---
 
 ## 🔍 Troubleshooting
 
-### **Lỗi thường gặp:**
+### **1. "Cannot find module '@/domain/...'"**
+- ✅ Kiểm tra `tsconfig.json` có alias `@` chưa
+- ✅ Restart TypeScript server
 
-1. **"Cannot read properties of undefined"**
-   - ✅ Dùng optional chaining: `user?.name`
-   - ✅ Provide fallback: `user?.name || 'N/A'`
+### **2. "Repository is not defined"**
+- ✅ Kiểm tra import path
+- ✅ Đảm bảo đã export class/interface
 
-2. **"401 Unauthorized"**
-   - ✅ Kiểm tra token trong localStorage
-   - ✅ Login lại để refresh token
-
-3. **Component không nhận props**
-   - ✅ Kiểm tra kebab-case trong template: `:total-users="totalUsers"`
-   - ✅ Kiểm tra camelCase trong props: `totalUsers: number`
-
-4. **Route không được protect**
-   - ✅ Kiểm tra middleware `auth.global.ts`
-   - ✅ Thêm route vào whitelist nếu cần
+### **3. "HTTP Client error"**
+- ✅ Kiểm tra `NUXT_PUBLIC_API_BASE_URL` trong `.env`
+- ✅ Kiểm tra token trong localStorage
+- ✅ Xem network tab trong DevTools
 
 ---
 
 ## 📖 Tài liệu tham khảo
 
+- [Clean Architecture - Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [Nuxt 3 Documentation](https://nuxt.com/docs)
 - [Vue 3 Composition API](https://vuejs.org/guide/extras/composition-api-faq.html)
-- [Tailwind CSS](https://tailwindcss.com/docs)
-- [Lucide Icons](https://lucide.dev/)
-- [API_USAGE.md](./API_USAGE.md) - Chi tiết về useApi composable
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
 
 ---
 
-**Cập nhật lần cuối:** 06/12/2025
-**Phiên bản:** 1.0.0
+## 🎓 Migration Status
+
+### **✅ Đã migrate sang Clean Architecture:**
+- Auth (login)
+- Users
+- Doctors
+- Specialties
+
+### **⏳ Đang sử dụng legacy `useApi()`:**
+- Dashboard
+- Reports
+
+### **📋 TODO:**
+- Migrate Dashboard sang ViewModel
+- Migrate Reports sang ViewModel
+- Thêm unit tests cho repositories
+- Thêm integration tests cho ViewModels
+
+---
+
+**Cập nhật lần cuối:** 12/12/2025
+**Phiên bản:** 2.0.0 (Clean Architecture)

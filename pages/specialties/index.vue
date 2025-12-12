@@ -15,16 +15,11 @@ useHead({
 
 const { specialties, loading, error, fetchSpecialties, deleteSpecialty } = useSpecialtyViewModel();
 const { notifySuccess, notifyFailed } = useNotification();
+const confirm = useConfirm();
 
-const isModalOpen = ref(false);
+const isAddModalOpen = ref(false);
 const isEditModalOpen = ref(false);
-const isConfirmModalOpen = ref(false);
 const selectedSpecialty = ref<Specialty | null>(null);
-const successMessage = ref('');
-
-// Confirm modal state
-const confirmModalTitle = ref('');
-const confirmModalMessage = ref('');
 
 // Fetch specialties on component mount
 onMounted(async () => {
@@ -32,21 +27,15 @@ onMounted(async () => {
 });
 
 const handleAdd = () => {
-  isModalOpen.value = true;
+  isAddModalOpen.value = true;
 };
 
 const handleModalClose = () => {
-  isModalOpen.value = false;
+  isAddModalOpen.value = false;
 };
 
 const handleModalSuccess = async () => {
-  successMessage.value = 'Chuyên khoa đã được tạo thành công!';
   await fetchSpecialties();
-  
-  // Clear success message after 5 seconds
-  setTimeout(() => {
-    successMessage.value = '';
-  }, 5000);
 };
 
 const handleEdit = (specialty: Specialty) => {
@@ -60,39 +49,35 @@ const handleEditModalClose = () => {
 };
 
 const handleEditModalSuccess = async () => {
-  successMessage.value = 'Chuyên khoa đã được cập nhật thành công!';
   await fetchSpecialties();
-  
-  // Clear success message after 5 seconds
-  setTimeout(() => {
-    successMessage.value = '';
-  }, 5000);
 };
 
 const handleDelete = (specialty: Specialty) => {
   selectedSpecialty.value = specialty;
-  confirmModalTitle.value = 'Xác nhận xóa chuyên khoa';
-  confirmModalMessage.value = `Bạn có chắc chắn muốn xóa chuyên khoa <strong>${specialty.name}</strong>?`;
-  isConfirmModalOpen.value = true;
-};
-
-const handleConfirmModalClose = () => {
-  isConfirmModalOpen.value = false;
-  selectedSpecialty.value = null;
-  confirmModalTitle.value = '';
-  confirmModalMessage.value = '';
-};
-
-const handleConfirmAction = async () => {
-  if (!selectedSpecialty.value) return;
   
-  try {
-    await deleteSpecialty(selectedSpecialty.value._id);
-    notifySuccess('Xóa chuyên khoa thành công!');
-    handleConfirmModalClose();
-  } catch (err: any) {
-    notifyFailed(err.message || 'Không thể xóa chuyên khoa');
-  }
+  // Use confirm composable
+  confirm.confirm({
+    title: 'Xác nhận xóa chuyên khoa',
+    message: `Bạn có chắc chắn muốn xóa chuyên khoa <strong>${specialty.name}</strong>?`,
+    confirmText: 'Xóa',
+    cancelText: 'Hủy',
+    confirmButtonClass: 'bg-red-600 hover:bg-red-700',
+    icon: 'warning',
+    onConfirm: async () => {
+      try {
+        await deleteSpecialty(specialty._id);
+        notifySuccess('Xóa chuyên khoa thành công!');
+        await fetchSpecialties();
+      } catch (err: any) {
+        notifyFailed(err.message || 'Không thể xóa chuyên khoa');
+      } finally {
+        selectedSpecialty.value = null;
+      }
+    },
+    onCancel: () => {
+      selectedSpecialty.value = null;
+    },
+  });
 };
 </script>
 
@@ -108,40 +93,6 @@ const handleConfirmAction = async () => {
       @add="handleAdd"
     />
 
-    <!-- Success Message -->
-    <Transition name="fade">
-      <div v-if="successMessage" class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-        <div class="flex items-center gap-3">
-          <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <h3 class="font-semibold text-green-800">Thành công</h3>
-            <p class="text-green-600">{{ successMessage }}</p>
-          </div>
-        </div>
-      </div>
-    </Transition>
-
-    <!-- Error State -->
-    <div v-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-      <div class="flex items-center gap-3">
-        <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <div>
-          <h3 class="font-semibold text-red-800">Lỗi tải dữ liệu</h3>
-          <p class="text-red-600">{{ error }}</p>
-        </div>
-      </div>
-      <button
-        @click="fetchSpecialties"
-        class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
-      >
-        Thử lại
-      </button>
-    </div>
-
     <!-- Specialty List -->
     <SpecialtyList 
       :specialties="specialties" 
@@ -152,7 +103,7 @@ const handleConfirmAction = async () => {
 
     <!-- Add Specialty Modal -->
     <AddSpecialtyModal
-      :is-open="isModalOpen"
+      :is-open="isAddModalOpen"
       @close="handleModalClose"
       @success="handleModalSuccess"
     />
@@ -167,15 +118,15 @@ const handleConfirmAction = async () => {
 
     <!-- Confirm Action Modal -->
     <ConfirmActionModal
-      :is-open="isConfirmModalOpen"
-      :title="confirmModalTitle"
-      :message="confirmModalMessage"
-      confirm-text="Xóa"
-      cancel-text="Hủy"
-      confirm-button-class="bg-red-600 hover:bg-red-700"
-      icon="warning"
-      @close="handleConfirmModalClose"
-      @confirm="handleConfirmAction"
+      :is-open="confirm.isOpen.value"
+      :title="confirm.title.value"
+      :message="confirm.message.value"
+      :confirm-text="confirm.confirmText.value"
+      :cancel-text="confirm.cancelText.value"
+      :confirm-button-class="confirm.confirmButtonClass.value"
+      :icon="confirm.icon.value"
+      @close="confirm.handleCancel"
+      @confirm="confirm.handleConfirm"
     />
   </div>
 </template>
