@@ -54,6 +54,20 @@ export const useSpecialtyViewModel = () => {
     }
   };
 
+  const deleteSpecialty = async (id: string): Promise<void> => {
+    loading.value = true;
+    error.value = '';
+    try {
+      await repository.delete(id);
+      await fetchSpecialties(); // Refresh list
+    } catch (err: any) {
+      error.value = err.message || 'Không thể xóa chuyên khoa';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     specialties,
     loading,
@@ -61,5 +75,6 @@ export const useSpecialtyViewModel = () => {
     fetchSpecialties,
     createSpecialty,
     updateSpecialty,
+    deleteSpecialty,
   };
 };

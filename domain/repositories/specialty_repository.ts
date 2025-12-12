@@ -4,4 +4,5 @@ export interface ISpecialtyRepository {
   getAll(): Promise<Specialty[]>;
   create(formData: FormData): Promise<Specialty>;
   update(id: string, formData: FormData): Promise<Specialty>;
+  delete(id: string): Promise<void>;
 }

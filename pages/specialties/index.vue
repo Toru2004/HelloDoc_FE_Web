@@ -3,6 +3,7 @@ import SpecialtyList from "@/components/organisms/specialties/SpecialtyList.vue"
 import PageOverview from "@/components/molecules/PageOverview.vue";
 import AddSpecialtyModal from "@/components/modal/AddSpecialtyModal.vue";
 import EditSpecialtyModal from "@/components/modal/EditSpecialtyModal.vue";
+import ConfirmActionModal from "@/components/modal/ConfirmActionModal.vue";
 
 definePageMeta({
   layout: "default",
@@ -12,11 +13,18 @@ useHead({
   title: 'Quản lý chuyên khoa - HelloDoc',
 });
 
-const { specialties, loading, error, fetchSpecialties } = useSpecialtyViewModel();
+const { specialties, loading, error, fetchSpecialties, deleteSpecialty } = useSpecialtyViewModel();
+const { notifySuccess, notifyFailed } = useNotification();
+
 const isModalOpen = ref(false);
 const isEditModalOpen = ref(false);
+const isConfirmModalOpen = ref(false);
 const selectedSpecialty = ref<Specialty | null>(null);
 const successMessage = ref('');
+
+// Confirm modal state
+const confirmModalTitle = ref('');
+const confirmModalMessage = ref('');
 
 // Fetch specialties on component mount
 onMounted(async () => {
@@ -59,6 +67,32 @@ const handleEditModalSuccess = async () => {
   setTimeout(() => {
     successMessage.value = '';
   }, 5000);
+};
+
+const handleDelete = (specialty: Specialty) => {
+  selectedSpecialty.value = specialty;
+  confirmModalTitle.value = 'Xác nhận xóa chuyên khoa';
+  confirmModalMessage.value = `Bạn có chắc chắn muốn xóa chuyên khoa <strong>${specialty.name}</strong>?`;
+  isConfirmModalOpen.value = true;
+};
+
+const handleConfirmModalClose = () => {
+  isConfirmModalOpen.value = false;
+  selectedSpecialty.value = null;
+  confirmModalTitle.value = '';
+  confirmModalMessage.value = '';
+};
+
+const handleConfirmAction = async () => {
+  if (!selectedSpecialty.value) return;
+  
+  try {
+    await deleteSpecialty(selectedSpecialty.value._id);
+    notifySuccess('Xóa chuyên khoa thành công!');
+    handleConfirmModalClose();
+  } catch (err: any) {
+    notifyFailed(err.message || 'Không thể xóa chuyên khoa');
+  }
 };
 </script>
 
@@ -113,6 +147,7 @@ const handleEditModalSuccess = async () => {
       :specialties="specialties" 
       :loading="loading"
       @edit="handleEdit"
+      @delete="handleDelete"
     />
 
     <!-- Add Specialty Modal -->
@@ -128,6 +163,19 @@ const handleEditModalSuccess = async () => {
       :specialty="selectedSpecialty"
       @close="handleEditModalClose"
       @success="handleEditModalSuccess"
+    />
+
+    <!-- Confirm Action Modal -->
+    <ConfirmActionModal
+      :is-open="isConfirmModalOpen"
+      :title="confirmModalTitle"
+      :message="confirmModalMessage"
+      confirm-text="Xóa"
+      cancel-text="Hủy"
+      confirm-button-class="bg-red-600 hover:bg-red-700"
+      icon="warning"
+      @close="handleConfirmModalClose"
+      @confirm="handleConfirmAction"
     />
   </div>
 </template>

@@ -16,4 +16,8 @@ export class SpecialtyRepositoryImpl implements ISpecialtyRepository {
   async update(id: string, formData: FormData): Promise<Specialty> {
     return await this.client.putFormData<Specialty>(`/specialty/${id}`, formData);
   }
+
+  async delete(id: string): Promise<void> {
+    await this.client.delete<void>(`/specialty/${id}`);
+  }
 }

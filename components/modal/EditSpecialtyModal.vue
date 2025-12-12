@@ -13,6 +13,7 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const { updateSpecialty } = useSpecialtyViewModel();
+const { notifySuccess, notifyFailed } = useNotification();
 
 // Form state
 const formData = ref({
@@ -123,10 +124,14 @@ const handleSubmit = async () => {
     
     await updateSpecialty(props.specialty._id, data);
     
+    // Show success notification
+    notifySuccess('Cập nhật chuyên khoa thành công!');
+    
     emit('success');
     emit('close');
   } catch (err: any) {
-    error.value = err.message || 'Không thể cập nhật chuyên khoa';
+    // Show error notification
+    notifyFailed(err.message || 'Không thể cập nhật chuyên khoa');
     console.error('Error updating specialty:', err);
   } finally {
     loading.value = false;

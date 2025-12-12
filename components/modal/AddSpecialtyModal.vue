@@ -12,6 +12,7 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const { createSpecialty } = useSpecialtyViewModel();
+const { notifySuccess, notifyFailed } = useNotification();
 
 // Form state
 const formData = ref({
@@ -113,6 +114,9 @@ const handleSubmit = async () => {
     
     await createSpecialty(data);
     
+    // Show success notification
+    notifySuccess('Thêm chuyên khoa thành công!');
+    
     // Reset form
     formData.value = { name: '', description: '', icon: null };
     iconPreview.value = null;
@@ -120,7 +124,8 @@ const handleSubmit = async () => {
     emit('success');
     emit('close');
   } catch (err: any) {
-    error.value = err.message || 'Không thể tạo chuyên khoa';
+    // Show error notification
+    notifyFailed(err.message || 'Không thể tạo chuyên khoa');
     console.error('Error creating specialty:', err);
   } finally {
     loading.value = false;
