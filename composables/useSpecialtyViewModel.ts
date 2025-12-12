@@ -31,7 +31,6 @@ export const useSpecialtyViewModel = () => {
     error.value = '';
     try {
       await repository.create(formData);
-      await fetchSpecialties(); // Refresh list
     } catch (err: any) {
       error.value = err.message || 'Không thể tạo chuyên khoa';
       throw err; // Re-throw to let UI handle specific success/fail logic if needed (e.g. closing modal)
@@ -45,7 +44,6 @@ export const useSpecialtyViewModel = () => {
     error.value = '';
     try {
       await repository.update(id, formData);
-      await fetchSpecialties(); // Refresh list
     } catch (err: any) {
       error.value = err.message || 'Không thể cập nhật chuyên khoa';
       throw err;
@@ -59,7 +57,6 @@ export const useSpecialtyViewModel = () => {
     error.value = '';
     try {
       await repository.delete(id);
-      await fetchSpecialties(); // Refresh list
     } catch (err: any) {
       error.value = err.message || 'Không thể xóa chuyên khoa';
       throw err;

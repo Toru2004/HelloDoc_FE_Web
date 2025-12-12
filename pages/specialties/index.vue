@@ -34,10 +34,6 @@ const handleModalClose = () => {
   isAddModalOpen.value = false;
 };
 
-const handleModalSuccess = async () => {
-  await fetchSpecialties();
-};
-
 const handleEdit = (specialty: Specialty) => {
   selectedSpecialty.value = specialty;
   isEditModalOpen.value = true;
@@ -48,7 +44,7 @@ const handleEditModalClose = () => {
   selectedSpecialty.value = null;
 };
 
-const handleEditModalSuccess = async () => {
+const handleReload = async () => {
   await fetchSpecialties();
 };
 
@@ -67,7 +63,7 @@ const handleDelete = (specialty: Specialty) => {
       try {
         await deleteSpecialty(specialty._id);
         notifySuccess('Xóa chuyên khoa thành công!');
-        await fetchSpecialties();
+        await handleReload();
       } catch (err: any) {
         notifyFailed(err.message || 'Không thể xóa chuyên khoa');
       } finally {
@@ -89,7 +85,7 @@ const handleDelete = (specialty: Specialty) => {
       description="Danh sách các chuyên khoa trong hệ thống HelloDoc"
       add-label="Thêm chuyên khoa"
       :loading="loading"
-      @reload="fetchSpecialties"
+      @reload="handleReload"
       @add="handleAdd"
     />
 
@@ -105,7 +101,7 @@ const handleDelete = (specialty: Specialty) => {
     <AddSpecialtyModal
       :is-open="isAddModalOpen"
       @close="handleModalClose"
-      @success="handleModalSuccess"
+      @success="handleReload"
     />
 
     <!-- Edit Specialty Modal -->
@@ -113,7 +109,7 @@ const handleDelete = (specialty: Specialty) => {
       :is-open="isEditModalOpen"
       :specialty="selectedSpecialty"
       @close="handleEditModalClose"
-      @success="handleEditModalSuccess"
+      @success="handleReload"
     />
 
     <!-- Confirm Action Modal -->
