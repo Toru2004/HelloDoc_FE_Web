@@ -1,4 +1,4 @@
-import type { User } from '../entities/user';
+import type { User, CreateUserDto } from '../entities/user';
 
 export interface ISpecialtyRepository {
   // Existing methods... (This file is just for context, I won't write this one as it exists)
@@ -6,4 +6,5 @@ export interface ISpecialtyRepository {
 
 export interface IUserRepository {
   getAll(): Promise<User[]>;
+  create(userData: CreateUserDto): Promise<User>;
 }

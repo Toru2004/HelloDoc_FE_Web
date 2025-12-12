@@ -11,3 +11,10 @@ export interface User {
   updatedAt: string;
   fcmToken?: string;
 }
+
+export interface CreateUserDto {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+}

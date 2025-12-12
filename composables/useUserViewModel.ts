@@ -1,6 +1,6 @@
 import { NuxtHttpClient } from '@/data/datasources/nuxt_http_client';
 import { UserRepositoryImpl } from '@/data/repositories/user_repository_impl';
-import type { User } from '@/domain/entities/user';
+import type { User, CreateUserDto } from '@/domain/entities/user';
 
 export const useUserViewModel = () => {
   const client = new NuxtHttpClient();
@@ -29,11 +29,28 @@ export const useUserViewModel = () => {
     }
   };
 
+  const createUser = async (userData: CreateUserDto) => {
+    loading.value = true;
+    error.value = '';
+    try {
+      const newUser = await repository.create(userData);
+      console.log('Created user:', newUser);
+      return newUser;
+    } catch (err: any) {
+      error.value = err.message || 'Không thể tạo người dùng';
+      console.error('Error creating user:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     users,
     filteredUsers,
     loading,
     error,
     fetchUsers,
+    createUser,
   };
 };

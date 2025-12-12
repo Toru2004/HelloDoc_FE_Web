@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import UserList from "@/components/organisms/users/UserList.vue";
 import PageOverview from "@/components/molecules/PageOverview.vue";
+import AddUserModal from "@/components/modal/AddUserModal.vue";
+import type { CreateUserDto } from "@/domain/entities/user";
 
 definePageMeta({
   layout: "default",
@@ -10,16 +12,40 @@ useHead({
   title: 'Quản lý người dùng - HelloDoc',
 });
 
-const { users, filteredUsers, loading, error, fetchUsers } = useUserViewModel();
+const { users, filteredUsers, loading, error, fetchUsers, createUser } = useUserViewModel();
+const { notifySuccess, notifyFailed } = useNotification();
+
+// Modal state
+const isAddModalOpen = ref(false);
 
 // Fetch users on component mount
 onMounted(async () => {
   await fetchUsers();
 });
 
+// ===== MODAL HANDLERS =====
 const handleAdd = () => {
-  // TODO: Implement add user functionality
-  console.log('Add user clicked');
+  isAddModalOpen.value = true;
+};
+
+const handleAddModalClose = () => {
+  isAddModalOpen.value = false;
+};
+
+const handleAddModalSubmit = async (userData: CreateUserDto) => {
+  try {
+    await createUser(userData);
+    notifySuccess('Thêm người dùng thành công!');
+    isAddModalOpen.value = false;
+    await fetchUsers();
+  } catch (err: any) {
+    notifyFailed(err.message || 'Không thể tạo người dùng');
+    throw err;
+  }
+};
+
+const handleReload = async () => {
+  await fetchUsers();
 };
 
 </script>
@@ -30,8 +56,9 @@ const handleAdd = () => {
     <PageOverview
       title="Quản lý người dùng"
       description="Danh sách người dùng trong hệ thống HelloDoc"
+      add-label="Thêm người dùng"
       :loading="loading"
-      @reload="fetchUsers"
+      @reload="handleReload"
       @add="handleAdd"
     />
 
@@ -56,5 +83,12 @@ const handleAdd = () => {
 
     <!-- User List Table -->
     <UserList :users="filteredUsers" :loading="loading" />
+
+    <!-- Add User Modal -->
+    <AddUserModal
+      :is-open="isAddModalOpen"
+      @close="handleAddModalClose"
+      @submit="handleAddModalSubmit"
+    />
   </div>
 </template>
