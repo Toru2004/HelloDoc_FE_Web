@@ -14,7 +14,7 @@ useHead({
   title: 'Quản lý người dùng - HelloDoc',
 });
 
-const { users, filteredUsers, loading, error, fetchUsers, createUser, updateUser } = useUserViewModel();
+const { users, filteredUsers, loading, error, fetchUsers, createUser, updateUser, deleteUser } = useUserViewModel();
 const { notifySuccess, notifyFailed } = useNotification();
 
 // Modal states
@@ -95,6 +95,22 @@ const handleReload = async () => {
   await fetchUsers();
 };
 
+const handleDelete = (user: User) => {
+  handleShowConfirmModal('delete', user);
+};
+
+const handleDeleteConfirmed = async () => {
+  if (!selectedUser.value) return;
+  
+  try {
+    await deleteUser(selectedUser.value._id);
+    notifySuccess('Khóa tài khoản thành công!');
+    await fetchUsers();
+  } catch (err: any) {
+    notifyFailed(err.message || 'Không thể khóa tài khoản');
+  }
+};
+
 // ===== CONFIRMATION HANDLERS =====
 const handleShowConfirmModal = (action: string, user?: User) => {
   actionNeedToConfirm.value = action;
@@ -110,7 +126,16 @@ const handleShowConfirmModal = (action: string, user?: User) => {
       confirmModalIcon.value = 'info';
       break;
     
-    // Add more cases here for other actions (e.g., delete)
+    case 'delete':
+      confirmModalTitle.value = 'Xác nhận khóa tài khoản';
+      confirmModalMessage.value = `Bạn có chắc chắn muốn khóa tài khoản <strong>${user?.name}</strong>?<br><span class="text-sm text-gray-600">Tài khoản sẽ không thể đăng nhập sau khi bị khóa.</span>`;
+      confirmModalConfirmText.value = 'Khóa tài khoản';
+      confirmModalCancelText.value = 'Hủy';
+      confirmModalButtonClass.value = 'bg-red-600 hover:bg-red-700';
+      confirmModalIcon.value = 'warning';
+      break;
+    
+    // Add more cases here for other actions
     default:
       confirmModalTitle.value = 'Xác nhận';
       confirmModalMessage.value = 'Bạn có chắc chắn muốn thực hiện hành động này?';
@@ -133,6 +158,10 @@ const handleConfirm = async () => {
   switch (actionNeedToConfirm.value) {
     case 'edit':
       await handleEditConfirmed();
+      break;
+    
+    case 'delete':
+      await handleDeleteConfirmed();
       break;
     
     // Add more cases here for other actions
@@ -181,6 +210,7 @@ const handleConfirm = async () => {
       :users="filteredUsers" 
       :loading="loading"
       @edit="handleEdit"
+      @delete="handleDelete"
     />
 
     <!-- Add User Modal -->

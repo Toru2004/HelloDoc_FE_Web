@@ -20,6 +20,8 @@ export class NuxtHttpClient implements IHttpClient {
 
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
+            // Add accessToken header for admin endpoints
+            headers['accessToken'] = token;
         }
 
         const url = `${this.baseURL}${endpoint}`;
@@ -98,6 +100,8 @@ export class NuxtHttpClient implements IHttpClient {
 
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
+            // Add accessToken header for admin endpoints
+            headers['accessToken'] = token;
         }
 
         try {

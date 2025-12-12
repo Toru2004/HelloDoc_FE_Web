@@ -16,4 +16,8 @@ export class UserRepositoryImpl implements IUserRepository {
   async update(id: string, userData: UpdateUserDto): Promise<User> {
     return await this.client.put<User>(`/user/updateUser/${id}`, userData);
   }
+
+  async delete(id: string): Promise<void> {
+    return await this.client.delete<void>(`/admin/delete-user/${id}`);
+  }
 }

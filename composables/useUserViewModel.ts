@@ -61,6 +61,21 @@ export const useUserViewModel = () => {
     }
   };
 
+  const deleteUser = async (id: string) => {
+    loading.value = true;
+    error.value = '';
+    try {
+      await repository.delete(id);
+      console.log('Deleted user:', id);
+    } catch (err: any) {
+      error.value = err.message || 'Không thể xóa người dùng';
+      console.error('Error deleting user:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     users,
     filteredUsers,
@@ -69,5 +84,6 @@ export const useUserViewModel = () => {
     fetchUsers,
     createUser,
     updateUser,
+    deleteUser,
   };
 };
