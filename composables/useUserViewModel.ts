@@ -68,8 +68,23 @@ export const useUserViewModel = () => {
       await repository.delete(id);
       console.log('Deleted user:', id);
     } catch (err: any) {
-      error.value = err.message || 'Không thể xóa người dùng';
+      error.value = err.message || 'Không thể khóa người dùng';
       console.error('Error deleting user:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const reactivateUser = async (id: string) => {
+    loading.value = true;
+    error.value = '';
+    try {
+      await repository.reactivate(id);
+      console.log('Reactivated user:', id);
+    } catch (err: any) {
+      error.value = err.message || 'Không thể mở khóa người dùng';
+      console.error('Error reactivating user:', err);
       throw err;
     } finally {
       loading.value = false;
@@ -85,5 +100,6 @@ export const useUserViewModel = () => {
     createUser,
     updateUser,
     deleteUser,
+    reactivateUser,
   };
 };

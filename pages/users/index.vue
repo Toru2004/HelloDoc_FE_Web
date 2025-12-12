@@ -14,7 +14,7 @@ useHead({
   title: 'Quản lý người dùng - HelloDoc',
 });
 
-const { users, filteredUsers, loading, error, fetchUsers, createUser, updateUser, deleteUser } = useUserViewModel();
+const { users, filteredUsers, loading, error, fetchUsers, createUser, updateUser, deleteUser, reactivateUser } = useUserViewModel();
 const { notifySuccess, notifyFailed } = useNotification();
 
 // Modal states
@@ -99,6 +99,10 @@ const handleDelete = (user: User) => {
   handleShowConfirmModal('delete', user);
 };
 
+const handleReactivate = (user: User) => {
+  handleShowConfirmModal('reactivate', user);
+};
+
 const handleDeleteConfirmed = async () => {
   if (!selectedUser.value) return;
   
@@ -108,6 +112,18 @@ const handleDeleteConfirmed = async () => {
     await fetchUsers();
   } catch (err: any) {
     notifyFailed(err.message || 'Không thể khóa tài khoản');
+  }
+};
+
+const handleReactivateConfirmed = async () => {
+  if (!selectedUser.value) return;
+  
+  try {
+    await reactivateUser(selectedUser.value._id);
+    notifySuccess('Mở khóa tài khoản thành công!');
+    await fetchUsers();
+  } catch (err: any) {
+    notifyFailed(err.message || 'Không thể mở khóa tài khoản');
   }
 };
 
@@ -133,6 +149,15 @@ const handleShowConfirmModal = (action: string, user?: User) => {
       confirmModalCancelText.value = 'Hủy';
       confirmModalButtonClass.value = 'bg-red-600 hover:bg-red-700';
       confirmModalIcon.value = 'warning';
+      break;
+    
+    case 'reactivate':
+      confirmModalTitle.value = 'Xác nhận mở khóa tài khoản';
+      confirmModalMessage.value = `Bạn có chắc chắn muốn mở khóa tài khoản <strong>${user?.name}</strong>?<br><span class="text-sm text-gray-600">Tài khoản sẽ có thể đăng nhập lại sau khi được mở khóa.</span>`;
+      confirmModalConfirmText.value = 'Mở khóa';
+      confirmModalCancelText.value = 'Hủy';
+      confirmModalButtonClass.value = 'bg-green-600 hover:bg-green-700';
+      confirmModalIcon.value = 'info';
       break;
     
     // Add more cases here for other actions
@@ -162,6 +187,10 @@ const handleConfirm = async () => {
     
     case 'delete':
       await handleDeleteConfirmed();
+      break;
+    
+    case 'reactivate':
+      await handleReactivateConfirmed();
       break;
     
     // Add more cases here for other actions
@@ -211,6 +240,7 @@ const handleConfirm = async () => {
       :loading="loading"
       @edit="handleEdit"
       @delete="handleDelete"
+      @reactivate="handleReactivate"
     />
 
     <!-- Add User Modal -->

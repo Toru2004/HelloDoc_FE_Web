@@ -10,6 +10,7 @@ interface Props {
 interface Emits {
   (e: 'edit', user: User): void;
   (e: 'delete', user: User): void;
+  (e: 'reactivate', user: User): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -89,10 +90,10 @@ const renderStatusCell = (row: User) => {
     ? 'bg-green-50 text-green-700 border border-green-200' 
     : 'bg-red-50 text-red-700 border border-red-200';
   
-  // Icon for status
+  // Icon path for status
   const iconPath = isActive
-    ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' // Check circle icon
-    : 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'; // X circle icon
+    ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' // Check circle
+    : 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'; // X circle
   
   return h('div', { class: 'flex items-center' }, [
     h('span', {
@@ -130,36 +131,56 @@ const renderActionsCell = (row: User) => {
         class: 'w-5 h-5',
         fill: 'none',
         viewBox: '0 0 24 24',
-        stroke: 'currentColor'
+        stroke: 'currentColor',
+        'stroke-width': '2'
       }, [
         h('path', {
           'stroke-linecap': 'round',
           'stroke-linejoin': 'round',
-          'stroke-width': '2',
           d: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
         })
       ])
     ]),
-    // Delete button (only for active users)
-    isActive ? h('button', {
-      class: 'p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors',
-      title: 'Khóa tài khoản',
-      onClick: () => emit('delete', row)
-    }, [
-      h('svg', {
-        class: 'w-5 h-5',
-        fill: 'none',
-        viewBox: '0 0 24 24',
-        stroke: 'currentColor'
-      }, [
-        h('path', {
-          'stroke-linecap': 'round',
-          'stroke-linejoin': 'round',
-          'stroke-width': '2',
-          d: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-        })
-      ])
-    ]) : null
+    // Lock/Unlock button
+    isActive 
+      ? h('button', {
+          class: 'p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors',
+          title: 'Khóa tài khoản',
+          onClick: () => emit('delete', row)
+        }, [
+          h('svg', {
+            class: 'w-5 h-5',
+            fill: 'none',
+            viewBox: '0 0 24 24',
+            stroke: 'currentColor',
+            'stroke-width': '2'
+          }, [
+            h('path', {
+              'stroke-linecap': 'round',
+              'stroke-linejoin': 'round',
+              d: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'
+            })
+          ])
+        ])
+      : h('button', {
+          class: 'p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors',
+          title: 'Mở khóa tài khoản',
+          onClick: () => emit('reactivate', row)
+        }, [
+          h('svg', {
+            class: 'w-5 h-5',
+            fill: 'none',
+            viewBox: '0 0 24 24',
+            stroke: 'currentColor',
+            'stroke-width': '2'
+          }, [
+            h('path', {
+              'stroke-linecap': 'round',
+              'stroke-linejoin': 'round',
+              d: 'M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z'
+            })
+          ])
+        ])
   ]);
 };
 

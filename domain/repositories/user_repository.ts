@@ -9,4 +9,5 @@ export interface IUserRepository {
   create(userData: CreateUserDto): Promise<User>;
   update(id: string, userData: UpdateUserDto): Promise<User>;
   delete(id: string): Promise<void>;
+  reactivate(id: string): Promise<void>;
 }

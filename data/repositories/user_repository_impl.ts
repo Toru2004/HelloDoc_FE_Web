@@ -20,4 +20,8 @@ export class UserRepositoryImpl implements IUserRepository {
   async delete(id: string): Promise<void> {
     return await this.client.delete<void>(`/admin/delete-user/${id}`);
   }
+
+  async reactivate(id: string): Promise<void> {
+    return await this.client.put<void>(`/admin/reactivate-user/${id}`);
+  }
 }
