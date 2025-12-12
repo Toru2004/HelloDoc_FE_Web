@@ -1,6 +1,6 @@
 import { NuxtHttpClient } from '@/data/datasources/nuxt_http_client';
 import { NewsRepositoryImpl } from '@/data/repositories/news_repository_impl';
-import type { News } from '@/domain/entities/news';
+import type { News, UpdateNewsDto } from '@/domain/entities/news';
 
 export const useNewsViewModel = () => {
   const client = new NuxtHttpClient();
@@ -20,6 +20,21 @@ export const useNewsViewModel = () => {
     } catch (err: any) {
       error.value = err.message || 'Không thể tải tin tức';
       console.error('Error fetching news:', err);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const updateNews = async (id: string, newsData: UpdateNewsDto) => {
+    loading.value = true;
+    error.value = '';
+    try {
+      await repository.update(id, newsData);
+      console.log('Updated news:', id);
+    } catch (err: any) {
+      error.value = err.message || 'Không thể cập nhật tin tức';
+      console.error('Error updating news:', err);
+      throw err;
     } finally {
       loading.value = false;
     }
@@ -51,6 +66,7 @@ export const useNewsViewModel = () => {
     loading,
     error,
     fetchNews,
+    updateNews,
     deleteNews,
   };
 };

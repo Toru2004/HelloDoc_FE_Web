@@ -10,4 +10,5 @@ export interface IHttpClient {
     delete<T>(url: string, options?: RequestOptions): Promise<T>;
     postFormData<T>(url: string, formData: FormData, options?: RequestOptions): Promise<T>;
     putFormData<T>(url: string, formData: FormData, options?: RequestOptions): Promise<T>;
+    patchFormData<T>(url: string, formData: FormData, options?: RequestOptions): Promise<T>;
 }

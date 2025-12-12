@@ -8,3 +8,9 @@ export interface News {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface UpdateNewsDto {
+  title?: string;
+  content?: string;
+  images?: File[];
+}

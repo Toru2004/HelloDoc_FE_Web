@@ -2,7 +2,8 @@
 import NewsList from "@/components/organisms/news/NewsList.vue";
 import PageOverview from "@/components/molecules/PageOverview.vue";
 import ConfirmActionModal from "@/components/modal/ConfirmActionModal.vue";
-import type { News } from "@/domain/entities/news";
+import EditNewsModal from "@/components/modal/EditNewsModal.vue";
+import type { News, UpdateNewsDto } from "@/domain/entities/news";
 
 definePageMeta({
   layout: "default",
@@ -12,11 +13,12 @@ useHead({
   title: 'Quản lý tin tức - HelloDoc',
 });
 
-const { news, filteredNews, loading, error, fetchNews, deleteNews } = useNewsViewModel();
+const { news, filteredNews, loading, error, fetchNews, updateNews, deleteNews } = useNewsViewModel();
 const { notifySuccess, notifyFailed } = useNotification();
 
 // Modal states
 const isConfirmModalOpen = ref(false);
+const isEditModalOpen = ref(false);
 const selectedNews = ref<News | null>(null);
 const confirmModalTitle = ref('');
 const confirmModalMessage = ref('');
@@ -27,6 +29,29 @@ const confirmModalIcon = ref<'warning' | 'info' | 'success'>('info');
 
 const handleReload = () => {
   fetchNews();
+};
+
+const handleEdit = (newsItem: News) => {
+  selectedNews.value = newsItem;
+  isEditModalOpen.value = true;
+};
+
+const handleCloseEdit = () => {
+  isEditModalOpen.value = false;
+  selectedNews.value = null;
+};
+
+const handleSubmitEdit = async (newsData: UpdateNewsDto) => {
+  if (!selectedNews.value) return;
+  
+  try {
+    await updateNews(selectedNews.value._id, newsData);
+    notifySuccess('Cập nhật tin tức thành công!');
+    await fetchNews();
+    handleCloseEdit();
+  } catch (err: any) {
+    notifyFailed(err.message || 'Không thể cập nhật tin tức');
+  }
 };
 
 const handleDelete = (newsItem: News) => {
@@ -94,7 +119,16 @@ const handleConfirm = async () => {
     <NewsList 
       :news="filteredNews" 
       :loading="loading"
+      @edit="handleEdit"
       @delete="handleDelete"
+    />
+
+    <!-- Edit News Modal -->
+    <EditNewsModal
+      :is-open="isEditModalOpen"
+      :news="selectedNews"
+      @close="handleCloseEdit"
+      @submit="handleSubmitEdit"
     />
 
     <!-- Confirmation Modal -->
