@@ -9,6 +9,13 @@ export interface News {
   updatedAt: string;
 }
 
+export interface CreateNewsDto {
+  adminId: string;
+  title: string;
+  content: string;
+  images?: File[];
+}
+
 export interface UpdateNewsDto {
   title?: string;
   content?: string;
