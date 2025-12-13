@@ -91,6 +91,10 @@ export class NuxtHttpClient implements IHttpClient {
         return this.fetchFormData<T>(endpoint, formData, 'PUT', options);
     }
 
+    async patchFormData<T>(endpoint: string, formData: FormData, options?: RequestOptions): Promise<T> {
+        return this.fetchFormData<T>(endpoint, formData, 'PATCH', options);
+    }
+
     private async fetchFormData<T>(endpoint: string, formData: FormData, method: string, options: RequestOptions = {}): Promise<T> {
          const token = this.auth.getToken();
         const url = `${this.baseURL}${endpoint}`;

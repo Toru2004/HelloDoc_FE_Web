@@ -30,6 +30,7 @@ const handleAdd = () => {
       title="Quản lý bác sĩ"
       description="Danh sách bác sĩ trong hệ thống HelloDoc"
       add-label="Thêm bác sĩ"
+      :show-add="false"
       :loading="loading"
       @reload="fetchDoctors"
       @add="handleAdd"
