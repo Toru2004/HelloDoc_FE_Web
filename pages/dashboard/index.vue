@@ -12,6 +12,10 @@ useHead({
 const api = useApi();
 
 // Stats
+const usersList = ref<User[]>([]);
+const doctorsList = ref<Doctor[]>([]);
+
+// Stats
 const totalUsers = ref(0);
 const totalDoctors = ref(0);
 const totalSpecialties = ref(0);
@@ -22,8 +26,12 @@ const totalRatings = ref(0);
 const verifiedDoctors = ref(0);
 const loading = ref(false);
 
+// Websocket stats
+const { onlineUsers, onlineDoctors, connect, onlineUserIds, onlineDoctorIds } = useWebSocket();
+
 // Fetch all stats
 onMounted(async () => {
+  connect();
   await fetchStats();
 });
 
@@ -33,10 +41,12 @@ const fetchStats = async () => {
   try {
     // Fetch users
     const users = await api.get<User[]>('/user');
+    usersList.value = users;
     totalUsers.value = users.filter(u => u.role?.toLowerCase() === 'user').length;
     
     // Fetch doctors
     const doctors = await api.get<Doctor[]>('/doctor/get-all');
+    doctorsList.value = doctors;
     totalDoctors.value = doctors.length;
     verifiedDoctors.value = doctors.filter(d => d.verified).length;
     totalPatients.value = doctors.reduce((sum, d) => sum + (d.patientsCount || 0), 0);
@@ -69,6 +79,12 @@ const fetchStats = async () => {
     :total-patients="totalPatients"
     :total-ratings="totalRatings"
     :verified-doctors="verifiedDoctors"
+    :online-users="onlineUsers"
+    :online-doctors="onlineDoctors"
+    :users-list="usersList"
+    :doctors-list="doctorsList"
+    :online-user-ids="onlineUserIds"
+    :online-doctor-ids="onlineDoctorIds"
     :loading="loading"
   />
 </template>

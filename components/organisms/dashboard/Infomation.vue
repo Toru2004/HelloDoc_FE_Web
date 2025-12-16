@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Users, Stethoscope, Activity, ClipboardList, TrendingUp, TrendingDown } from "lucide-vue-next";
+import { Users, Stethoscope, Activity, ClipboardList, TrendingUp, TrendingDown, Eye, Zap, ArrowRight } from "lucide-vue-next";
+import OnlineListModal from "./OnlineListModal.vue";
 
 interface Props {
   totalUsers: number;
@@ -11,6 +12,12 @@ interface Props {
   totalRatings: number;
   verifiedDoctors: number;
   loading: boolean;
+  onlineUsers?: number;
+  onlineDoctors?: number;
+  usersList?: any[];
+  doctorsList?: any[];
+  onlineUserIds?: string[];
+  onlineDoctorIds?: string[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -23,25 +30,121 @@ const props = withDefaults(defineProps<Props>(), {
   totalRatings: 0,
   verifiedDoctors: 0,
   loading: false,
+  onlineUsers: 0,
+  onlineDoctors: 0,
+  usersList: () => [],
+  doctorsList: () => [],
+  onlineUserIds: () => [],
+  onlineDoctorIds: () => [],
 });
 
-// Stats cards configuration
+// === Animation Logic ===
+const useAnimatedNumber = (target: () => number) => {
+  const displayed = ref(target());
+  
+  watch(target, (newVal) => {
+    const start = displayed.value;
+    const startTime = performance.now();
+    const duration = 800; // ms
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out quart
+      const ease = 1 - Math.pow(1 - progress, 4);
+      
+      displayed.value = Math.round(start + (newVal - start) * ease);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+    requestAnimationFrame(animate);
+  });
+
+  return displayed;
+};
+
+const animatedOnlineUsers = useAnimatedNumber(() => props.onlineUsers);
+const animatedOnlineDoctors = useAnimatedNumber(() => props.onlineDoctors);
+
+// === Modal Logic ===
+const isModalOpen = ref(false);
+const modalTitle = ref("");
+const modalItems = ref<any[]>([]);
+
+const openOnlineUsersModal = () => {
+  const onlineMap = new Set(props.onlineUserIds);
+  const users = props.usersList.filter(u => onlineMap.has(u._id));
+  
+  modalItems.value = users.map(u => ({
+    id: u._id,
+    name: u.fullName || 'Unknown User',
+    email: u.email,
+    avatar: u.avatar,
+    role: 'User'
+  }));
+  
+  const matchedIds = new Set(users.map(u => u._id));
+  props.onlineUserIds.forEach(id => {
+    if (!matchedIds.has(id)) {
+      modalItems.value.push({
+        id: id,
+        name: `User ${id.substring(0, 6)}...`,
+        email: 'Unknown',
+        role: 'Visitor/User'
+      });
+    }
+  });
+
+  modalTitle.value = "Người dùng đang online";
+  isModalOpen.value = true;
+};
+
+const openOnlineDoctorsModal = () => {
+  const onlineMap = new Set(props.onlineDoctorIds);
+  const doctors = props.doctorsList.filter(d => onlineMap.has(d._id));
+
+  modalItems.value = doctors.map(d => ({
+    id: d._id,
+    name: d.fullName || 'Unknown Doctor',
+    email: d.email,
+    avatar: d.avatar,
+    role: 'Doctor'
+  }));
+  
+  props.onlineDoctorIds.forEach(id => {
+    if (!doctors.find(d => d._id === id)) {
+      modalItems.value.push({
+        id: id,
+        name: `Doctor ${id.substring(0, 6)}...`,
+        email: 'Unknown',
+        role: 'Doctor'
+      });
+    }
+  });
+
+  modalTitle.value = "Bác sĩ đang online";
+  isModalOpen.value = true;
+};
+
+// === Stats Configuration ===
 const statsCards = computed(() => [
   {
     title: 'Tổng người dùng',
     value: props.totalUsers,
     icon: Users,
-    color: 'from-blue-500 to-blue-600',
-    bgColor: 'bg-blue-50',
+    color: 'bg-blue-500',
+    lightColor: 'bg-blue-50',
     textColor: 'text-blue-600',
-    link: '/manageUsers'
+    link: '/manageUsers',
   },
   {
     title: 'Tổng bác sĩ',
     value: props.totalDoctors,
     icon: Stethoscope,
-    color: 'from-green-500 to-green-600',
-    bgColor: 'bg-green-50',
+    color: 'bg-green-500',
+    lightColor: 'bg-green-50',
     textColor: 'text-green-600',
     link: '/manageDoctors',
     subtitle: `${props.verifiedDoctors} đã xác minh`
@@ -50,8 +153,8 @@ const statsCards = computed(() => [
     title: 'Chuyên khoa',
     value: props.totalSpecialties,
     icon: Activity,
-    color: 'from-purple-500 to-purple-600',
-    bgColor: 'bg-purple-50',
+    color: 'bg-purple-500',
+    lightColor: 'bg-purple-50',
     textColor: 'text-purple-600',
     link: '/specialties'
   },
@@ -59,171 +162,209 @@ const statsCards = computed(() => [
     title: 'Báo cáo',
     value: props.totalReports,
     icon: ClipboardList,
-    color: 'from-orange-500 to-orange-600',
-    bgColor: 'bg-orange-50',
+    color: 'bg-orange-500',
+    lightColor: 'bg-orange-50',
     textColor: 'text-orange-600',
     link: '/reports',
     subtitle: `${props.pendingReports} chờ xử lý`
   },
 ]);
 
-// Additional stats
-const additionalStats = computed(() => [
-  {
-    label: 'Tổng lượt khám',
-    value: props.totalPatients,
-    trend: 'up',
-    percentage: '12%'
-  },
-  {
-    label: 'Tổng đánh giá',
-    value: props.totalRatings,
-    trend: 'up',
-    percentage: '8%'
-  },
-  {
-    label: 'Bác sĩ đã xác minh',
-    value: props.verifiedDoctors,
-    trend: 'up',
-    percentage: `${props.totalDoctors > 0 ? Math.round((props.verifiedDoctors / props.totalDoctors) * 100) : 0}%`
-  },
-  {
-    label: 'Báo cáo chờ xử lý',
-    value: props.pendingReports,
-    trend: props.pendingReports > 5 ? 'down' : 'up',
-    percentage: `${props.totalReports > 0 ? Math.round((props.pendingReports / props.totalReports) * 100) : 0}%`
-  },
-]);
+const quickActions = [
+  { label: 'Quản lý người dùng', icon: Users, to: '/users', color: 'text-blue-600', hoverBg: 'hover:bg-blue-50' },
+  { label: 'Quản lý bác sĩ', icon: Stethoscope, to: '/doctors', color: 'text-green-600', hoverBg: 'hover:bg-green-50' },
+  { label: 'Quản lý chuyên khoa', icon: Activity, to: '/specialties', color: 'text-purple-600', hoverBg: 'hover:bg-purple-50' },
+  { label: 'Xem báo cáo', icon: ClipboardList, to: '/reports', color: 'text-orange-600', hoverBg: 'hover:bg-orange-50' },
+];
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-6 max-w-7xl">
     <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
-      <p class="text-gray-600 mt-2">Tổng quan hệ thống HelloDoc</p>
-    </div>
-
-    <!-- Loading State -->
-    <div v-if="props.loading" class="flex items-center justify-center py-20">
-      <div class="flex flex-col items-center gap-3">
-        <svg
-          class="w-12 h-12 text-blue-600 animate-spin"
-          fill="none"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <circle
-            class="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            stroke-width="4"
-          ></circle>
-          <path
-            class="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-          ></path>
-        </svg>
-        <p class="text-gray-600">Đang tải dữ liệu...</p>
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800 tracking-tight">Dashboard Overview</h1>
+        <p class="text-gray-500 text-sm mt-1">HelloDoc Admin Panel</p>
+      </div>
+      <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-100">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+        </span>
+        <span class="text-xs font-medium text-gray-600">Hệ thống đang hoạt động</span>
       </div>
     </div>
 
-    <!-- Stats Cards -->
+    <div v-if="props.loading" class="flex flex-col items-center justify-center py-32 space-y-4">
+      <div class="relative">
+        <div class="w-12 h-12 border-4 border-blue-100 rounded-full animate-spin border-t-blue-600"></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
+        </div>
+      </div>
+      <p class="text-gray-400 text-sm animate-pulse">Đang đồng bộ dữ liệu...</p>
+    </div>
+
     <div v-else>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <NuxtLink
-          v-for="card in statsCards"
-          :key="card.title"
-          :to="card.link"
-          class="group"
-        >
-          <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 hover:scale-105 cursor-pointer">
-            <div class="flex items-center justify-between mb-4">
-              <div :class="[card.bgColor, 'p-3 rounded-lg']">
-                <component :is="card.icon" :class="[card.textColor, 'w-6 h-6']" />
+      <div class="grid grid-cols-12 gap-6">
+        
+        <!-- LEFT COLUMN: Live Data (Span 4) -->
+        <div class="col-span-12 lg:col-span-4 space-y-6">
+          <div class="bg-gradient-to-br from-indigo-900 via-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden ring-1 ring-white/10">
+            <!-- Background Decoration -->
+            <div class="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-blue-500 rounded-full blur-3xl opacity-20"></div>
+            <div class="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 bg-purple-500 rounded-full blur-3xl opacity-20"></div>
+
+            <div class="relative z-10">
+              <div class="flex items-center gap-2 mb-6">
+                <Zap class="w-5 h-5 text-yellow-300 fill-yellow-300" />
+                <h2 class="font-semibold text-lg tracking-wide">Hoạt động</h2>
               </div>
-            </div>
-            
-            <div class="space-y-1">
-              <p class="text-gray-500 text-sm font-medium">{{ card.title }}</p>
-              <p class="text-3xl font-bold text-gray-800">{{ card.value.toLocaleString() }}</p>
-              <p v-if="card.subtitle" class="text-xs text-gray-400">{{ card.subtitle }}</p>
+
+              <div class="space-y-4">
+                <!-- Online Users Item -->
+                <div class="group bg-white/5 hover:bg-white/10 rounded-xl p-4 border border-white/5 hover:border-white/10 transition-all duration-300">
+                  <div class="flex justify-between items-start mb-2">
+                    <span class="text-slate-300 text-sm font-medium">Người dùng</span>
+                    <button @click="openOnlineUsersModal" class="p-1.5 hover:bg-white/10 rounded-lg transition-colors" title="Xem danh sách">
+                      <Eye class="w-4 h-4 text-slate-400 group-hover:text-blue-300" />
+                    </button>
+                  </div>
+                  <div class="flex items-baseline gap-2">
+                    <span class="text-4xl font-bold tracking-tight text-white transition-all duration-300 ease-out" :key="animatedOnlineUsers">
+                      {{ animatedOnlineUsers }}
+                    </span>
+                    <span class="text-xs text-green-400 font-medium bg-green-400/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                      <div class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div> Đang hoạt động
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Online Doctors Item -->
+                <div class="group bg-white/5 hover:bg-white/10 rounded-xl p-4 border border-white/5 hover:border-white/10 transition-all duration-300">
+                  <div class="flex justify-between items-start mb-2">
+                    <span class="text-slate-300 text-sm font-medium">Bác sĩ</span>
+                    <button @click="openOnlineDoctorsModal" class="p-1.5 hover:bg-white/10 rounded-lg transition-colors" title="Xem danh sách">
+                      <Eye class="w-4 h-4 text-slate-400 group-hover:text-green-300" />
+                    </button>
+                  </div>
+                  <div class="flex items-baseline gap-2">
+                    <span class="text-4xl font-bold tracking-tight text-white transition-all duration-300 ease-out" :key="animatedOnlineDoctors">
+                      {{ animatedOnlineDoctors }}
+                    </span>
+                    <span class="text-xs text-green-400 font-medium bg-green-400/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                      <div class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div> Đang hoạt động
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </NuxtLink>
-      </div>
 
-      <!-- Additional Stats -->
-      <!-- <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-        <h2 class="text-xl font-bold text-gray-800 mb-6">Thống kê chi tiết</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div
-            v-for="stat in additionalStats"
-            :key="stat.label"
-            class="border-l-4 pl-4"
-            :class="stat.trend === 'up' ? 'border-green-500' : 'border-red-500'"
-          >
-            <div class="flex items-center justify-between mb-2">
-              <p class="text-sm text-gray-500">{{ stat.label }}</p>
-              <div class="flex items-center gap-1">
-                <component
-                  :is="stat.trend === 'up' ? TrendingUp : TrendingDown"
-                  :class="stat.trend === 'up' ? 'text-green-500' : 'text-red-500'"
-                  class="w-4 h-4"
-                />
-                <span
-                  :class="stat.trend === 'up' ? 'text-green-600' : 'text-red-600'"
-                  class="text-xs font-semibold"
-                >
-                  {{ stat.percentage }}
-                </span>
-              </div>
+          <!-- Quick Actions Panel (Vertical on Desktops, nice fit below Live Stats) -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hidden lg:block">
+            <h3 class="font-semibold text-gray-700 mb-4 text-sm uppercase tracking-wider">Lối tắt</h3>
+            <div class="space-y-2">
+              <NuxtLink 
+                v-for="action in quickActions" 
+                :key="action.to"
+                :to="action.to"
+                class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors group border border-transparent hover:border-gray-100"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="p-2 rounded-lg bg-gray-50 group-hover:bg-white group-hover:shadow-sm transition-all" :class="action.color">
+                    <component :is="action.icon" class="w-4 h-4" />
+                  </div>
+                  <span class="text-sm font-medium text-gray-600 group-hover:text-gray-900">{{ action.label }}</span>
+                </div>
+                <ArrowRight class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transform group-hover:translate-x-1 transition-all" />
+              </NuxtLink>
             </div>
-            <p class="text-2xl font-bold text-gray-800">{{ stat.value.toLocaleString() }}</p>
           </div>
         </div>
-      </div> -->
 
-      <!-- Quick Actions -->
-      <div class="bg-white rounded-xl shadow-md p-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-6">Thao tác nhanh</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <NuxtLink
-            to="/users"
-            class="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all group"
-          >
-            <Users class="w-5 h-5 text-blue-600" />
-            <span class="text-sm font-medium text-gray-700 group-hover:text-blue-600">Quản lý người dùng</span>
-          </NuxtLink>
+        <!-- RIGHT COLUMN: Stats & Data (Span 8) -->
+        <div class="col-span-12 lg:col-span-8 flex flex-col gap-6">
           
-          <NuxtLink
-            to="/doctors"
-            class="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-all group"
-          >
-            <Stethoscope class="w-5 h-5 text-green-600" />
-            <span class="text-sm font-medium text-gray-700 group-hover:text-green-600">Quản lý bác sĩ</span>
-          </NuxtLink>
-          
-          <NuxtLink
-            to="/specialties"
-            class="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-all group"
-          >
-            <Activity class="w-5 h-5 text-purple-600" />
-            <span class="text-sm font-medium text-gray-700 group-hover:text-purple-600">Quản lý chuyên khoa</span>
-          </NuxtLink>
-          
-          <NuxtLink
-            to="/reports"
-            class="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-all group"
-          >
-            <ClipboardList class="w-5 h-5 text-orange-600" />
-            <span class="text-sm font-medium text-gray-700 group-hover:text-orange-600">Xem báo cáo</span>
-          </NuxtLink>
+          <!-- Main Stats Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div 
+              v-for="card in statsCards"
+              :key="card.title"
+              class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 relative group overflow-hidden"
+            >
+              <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-transparent to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-full"></div>
+              
+              <div class="relative z-10">
+                <div class="flex justify-between items-start mb-4">
+                  <div :class="[card.lightColor, card.textColor]" class="p-3 rounded-xl">
+                    <component :is="card.icon" class="w-6 h-6" />
+                  </div>
+                  <NuxtLink :to="card.link" class="text-xs font-semibold text-gray-400 hover:text-blue-600 transition-colors">
+                    Chi tiết
+                  </NuxtLink>
+                </div>
+                
+                <div>
+                  <h3 class="text-gray-500 text-sm font-medium mb-1">{{ card.title }}</h3>
+                  <div class="flex items-end gap-2">
+                    <span class="text-2xl font-bold text-gray-800">{{ card.value.toLocaleString() }}</span>
+                    <span v-if="card.subtitle" class="text-xs text-gray-400 mb-1.5 font-medium px-1.5 py-0.5 bg-gray-100 rounded">
+                      {{ card.subtitle }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mobile/Tablet Quick Actions (Visible only on smaller screens) -->
+          <div class="lg:hidden grid grid-cols-2 gap-3">
+             <NuxtLink 
+                v-for="action in quickActions" 
+                :key="action.to"
+                :to="action.to"
+                class="flex flex-col items-center justify-center p-4 rounded-xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all text-center gap-2"
+              >
+                <div class="p-2.5 rounded-full bg-gray-50" :class="action.color">
+                   <component :is="action.icon" class="w-5 h-5" />
+                </div>
+                <span class="text-xs font-medium text-gray-700">{{ action.label }}</span>
+             </NuxtLink>
+          </div>
+
+          <!-- Optional: Chart or Secondary Content Placeholder could go here -->
+          <div class="bg-gray-50 rounded-2xl border border-dashed border-gray-200 p-8 flex flex-col items-center justify-center text-center">
+             <div class="p-3 bg-white rounded-full shadow-sm mb-3">
+               <Activity class="w-6 h-6 text-gray-400" />
+             </div>
+             <h4 class="text-gray-900 font-medium">Biểu đồ thống kê</h4>
+             <p class="text-gray-500 text-sm max-w-xs mx-auto mt-1">Tính năng biểu đồ tăng trưởng và phân tích dữ liệu tham khảo sẽ được cập nhật sớm.</p>
+          </div>
+
         </div>
       </div>
     </div>
+
+    <!-- Modals -->
+    <OnlineListModal
+      :is-open="isModalOpen"
+      :title="modalTitle"
+      :items="modalItems"
+      @close="isModalOpen = false"
+    />
   </div>
 </template>
+
+<style scoped>
+/* Custom animations if needed beyond tailwind */
+.rotate-enter-active,
+.rotate-leave-active {
+  transition: all 0.5s ease;
+}
+.rotate-enter-from,
+.rotate-leave-to {
+  opacity: 0;
+  transform: rotateX(90deg);
+}
+</style>
