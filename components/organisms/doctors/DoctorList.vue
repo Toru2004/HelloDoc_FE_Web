@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import DataTable from "@/components/molecules/DataTable.vue";
-import { h } from 'vue';
+import ImageViewerModal from "@/components/modal/ImageViewerModal.vue";
+import { h, ref } from 'vue';
 
 interface Props {
   doctors: Doctor[];
@@ -11,6 +12,15 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
 });
 
+// Viewer State
+const isViewerOpen = ref(false);
+const selectedImageUrl = ref('');
+
+const openImageViewer = (url: string) => {
+  selectedImageUrl.value = url;
+  isViewerOpen.value = true;
+};
+
 // Render doctor info cell
 const renderDoctorCell = (row: Doctor) => {
   return h('div', { class: 'flex items-start gap-3' }, [
@@ -19,7 +29,8 @@ const renderDoctorCell = (row: Doctor) => {
         ? h('img', {
             src: row.avatarURL,
             alt: row.name,
-            class: 'h-16 w-16 rounded-full object-cover border-2 border-blue-200'
+            class: 'h-16 w-16 rounded-full object-cover border-2 border-blue-200 cursor-pointer hover:opacity-90 transition-opacity',
+            onClick: () => openImageViewer(row.avatarURL)
           })
         : h('div', {
             class: 'h-16 w-16 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold text-xl'
@@ -107,10 +118,9 @@ const renderServicesCell = (row: Doctor) => {
 // Render documents cell
 const renderDocumentsCell = (row: Doctor) => {
   const createDocLink = (url: string, label: string) => {
-    return h('a', {
-      href: url,
-      target: '_blank',
-      class: 'text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1'
+    return h('div', {
+      class: 'text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 cursor-pointer select-none',
+      onClick: () => openImageViewer(url)
     }, [
       h('svg', {
         class: 'w-4 h-4',
@@ -185,12 +195,19 @@ const columns: TableColumn<Doctor>[] = [
 </script>
 
 <template>
-  <DataTable
-    :columns="columns"
-    :data="doctors"
-    :loading="loading"
-    empty-message="Không có bác sĩ"
-    empty-icon="users"
-    summary-label="Tổng số bác sĩ"
-  />
+  <div>
+    <DataTable
+      :columns="columns"
+      :data="doctors"
+      :loading="loading"
+      empty-message="Không có bác sĩ"
+      empty-icon="users"
+      summary-label="Tổng số bác sĩ"
+    />
+    <ImageViewerModal 
+      :is-open="isViewerOpen"
+      :image-url="selectedImageUrl"
+      @close="isViewerOpen = false"
+    />
+  </div>
 </template>
