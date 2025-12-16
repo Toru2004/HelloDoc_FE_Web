@@ -30,6 +30,12 @@ const menuItems = [
     description: "Danh sách bác sĩ"
   },
   { 
+    label: "Xét duyệt", 
+    path: "/applications-pending", 
+    icon: FileText,
+    description: "Xác thực bác sĩ"
+  },
+  { 
     label: "Người dùng", 
     path: "/users", 
     icon: Users,
