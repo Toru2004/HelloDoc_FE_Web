@@ -31,14 +31,48 @@ const formatDate = (dateString: string) => {
   });
 };
 
-// Get role badge color
-const getRoleBadgeColor = (role: string) => {
-  const colorMap: Record<string, string> = {
-    admin: 'bg-red-100 text-red-800',
-    doctor: 'bg-blue-100 text-blue-800',
-    user: 'bg-green-100 text-green-800',
+// Role configuration helper (Label, Icon, Styles)
+const getRoleConfig = (role: string) => {
+  const r = role.toLowerCase();
+  
+  const configs: Record<string, { label: string; icon: string; classes: string }> = {
+    admin: {
+      label: 'Quản trị viên',
+      classes: 'bg-red-50 text-red-700 border-red-200',
+      icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'
+    },
+    doctor: {
+      label: 'Bác sĩ',
+      classes: 'bg-blue-50 text-blue-700 border-blue-200',
+      icon: 'M13 10V3L4 14h7v7l9-11h-7z' // Simplified lightning/energy or stethoscope-ish placeholder
+    },
+    user: {
+      label: 'Người bình thường',
+      classes: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
+    },
+    blind: {
+      label: 'Người khiếm thị',
+      classes: 'bg-purple-50 text-purple-700 border-purple-200',
+      icon: 'M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88L5.465 5.464m9.95 9.95l4.586 4.586m-5.06-10.74a10.003 10.003 0 013.358 2.748M21 12a9.959 9.959 0 01-1.563 3.029'
+    },
+    deaf: {
+      label: 'Người khiếm thính',
+      classes: 'bg-amber-50 text-amber-700 border-amber-200',
+      icon: 'M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z'
+    },
+    mute: {
+      label: 'Người khiếm khẩu',
+      classes: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      icon: 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z'
+    }
   };
-  return colorMap[role.toLowerCase()] || 'bg-gray-100 text-gray-800';
+  
+  return configs[r] || {
+    label: role,
+    classes: 'bg-gray-50 text-gray-700 border-gray-200',
+    icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+  };
 };
 
 // Render functions for custom cells
@@ -74,9 +108,26 @@ const renderAddressCell = (row: User) => {
 };
 
 const renderRoleCell = (row: User) => {
+  const config = getRoleConfig(row.role);
+  
   return h('span', {
-    class: `px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(row.role)}`
-  }, row.role);
+    class: `inline-flex items-center justify-center gap-1.5 w-36 py-1.5 text-[10px] font-bold rounded-lg border shadow-sm transition-all duration-200 hover:scale-105 ${config.classes}`
+  }, [
+    h('svg', {
+      class: 'w-3.5 h-3.5 flex-shrink-0',
+      fill: 'none',
+      viewBox: '0 0 24 24',
+      stroke: 'currentColor',
+      'stroke-width': '2'
+    }, [
+      h('path', {
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round',
+        d: config.icon
+      })
+    ]),
+    h('span', { class: 'truncate' }, config.label)
+  ]);
 };
 
 const renderDateCell = (row: User) => {
@@ -87,8 +138,8 @@ const renderStatusCell = (row: User) => {
   const isActive = !row.isDeleted;
   const statusText = isActive ? 'Đang hoạt động' : 'Đã khóa';
   const statusClass = isActive 
-    ? 'bg-green-50 text-green-700 border border-green-200' 
-    : 'bg-red-50 text-red-700 border border-red-200';
+    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+    : 'bg-red-50 text-red-700 border-red-200';
   
   // Icon path for status
   const iconPath = isActive
@@ -97,10 +148,10 @@ const renderStatusCell = (row: User) => {
   
   return h('div', { class: 'flex items-center' }, [
     h('span', {
-      class: `inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${statusClass}`
+      class: `inline-flex items-center justify-center gap-1.5 w-36 py-1.5 text-[10px] font-bold rounded-lg border shadow-sm transition-all duration-200 hover:scale-105 ${statusClass}`
     }, [
       h('svg', {
-        class: 'w-3.5 h-3.5',
+        class: 'w-3.5 h-3.5 flex-shrink-0',
         fill: 'none',
         viewBox: '0 0 24 24',
         stroke: 'currentColor',

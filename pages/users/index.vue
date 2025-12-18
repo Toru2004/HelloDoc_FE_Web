@@ -14,7 +14,7 @@ useHead({
   title: 'Quản lý người dùng - HelloDoc',
 });
 
-const { users, filteredUsers, loading, error, fetchUsers, createUser, updateUser, deleteUser, reactivateUser } = useUserViewModel();
+const { users, loading, error, fetchUsers, createUser, updateUser, deleteUser, reactivateUser } = useUserViewModel();
 const { notifySuccess, notifyFailed } = useNotification();
 
 // Modal states
@@ -37,169 +37,195 @@ onMounted(async () => {
   await fetchUsers();
 });
 
-// ===== MODAL HANDLERS =====
-const handleAdd = () => {
-  isAddModalOpen.value = true;
-};
 
-const handleAddModalClose = () => {
-  isAddModalOpen.value = false;
-};
+  // Filter logic
+  const activeTab = ref('all');
+  const tabs = [
+    { id: 'all', label: 'Tất cả' },
+    { id: 'user', label: 'Người thường' },
+    { id: 'blind', label: 'Người khiếm thị' },
+    { id: 'deaf', label: 'Người khiếm thính' },
+    { id: 'mute', label: 'Người khiểm khẩu' },
+  ];
 
-const handleAddModalSubmit = async (userData: CreateUserDto) => {
-  try {
-    await createUser(userData);
-    notifySuccess('Thêm người dùng thành công!');
+  const displayedUsers = computed(() => {
+    if (activeTab.value === 'all') {
+      return users.value.filter(u => ['user', 'blind', 'deaf', 'mute'].includes(u.role.toLowerCase()));
+    }
+    return users.value.filter(user => user.role.toLowerCase() === activeTab.value);
+  });
+
+  // Calculate counts for tabs
+  const getTabCount = (tabId: string) => {
+    if (tabId === 'all') {
+      return users.value.filter(u => ['user', 'blind', 'deaf', 'mute'].includes(u.role.toLowerCase())).length;
+    }
+    return users.value.filter(user => user.role.toLowerCase() === tabId).length;
+  };
+
+  // ===== MODAL HANDLERS =====
+  const handleAdd = () => {
+    isAddModalOpen.value = true;
+  };
+
+  const handleAddModalClose = () => {
     isAddModalOpen.value = false;
-    await fetchUsers();
-  } catch (err: any) {
-    notifyFailed(err.message || 'Không thể tạo người dùng');
-    throw err;
-  }
-};
+  };
 
-const handleEdit = (user: User) => {
-  selectedUser.value = user;
-  isEditModalOpen.value = true;
-};
+  const handleAddModalSubmit = async (userData: CreateUserDto) => {
+    try {
+      await createUser(userData);
+      notifySuccess('Thêm người dùng thành công!');
+      isAddModalOpen.value = false;
+      await fetchUsers();
+    } catch (err: any) {
+      notifyFailed(err.message || 'Không thể tạo người dùng');
+      throw err;
+    }
+  };
 
-const handleEditModalClose = () => {
-  isEditModalOpen.value = false;
-  selectedUser.value = null;
-};
+  const handleEdit = (user: User) => {
+    selectedUser.value = user;
+    isEditModalOpen.value = true;
+  };
 
-// Store form data for confirmation
-const pendingEditFormData = ref<UpdateUserDto | null>(null);
-
-const handleEditModalSubmit = async (id: string, userData: UpdateUserDto) => {
-  // Store form data and show confirmation
-  pendingEditFormData.value = userData;
-  handleShowConfirmModal('edit', selectedUser.value!);
-};
-
-const handleEditConfirmed = async () => {
-  if (!selectedUser.value || !pendingEditFormData.value) return;
-  
-  try {
-    await updateUser(selectedUser.value._id, pendingEditFormData.value);
-    notifySuccess('Cập nhật người dùng thành công!');
+  const handleEditModalClose = () => {
     isEditModalOpen.value = false;
-    pendingEditFormData.value = null;
+    selectedUser.value = null;
+  };
+
+  // Store form data for confirmation
+  const pendingEditFormData = ref<UpdateUserDto | null>(null);
+
+  const handleEditModalSubmit = async (id: string, userData: UpdateUserDto) => {
+    // Store form data and show confirmation
+    pendingEditFormData.value = userData;
+    handleShowConfirmModal('edit', selectedUser.value!);
+  };
+
+  const handleEditConfirmed = async () => {
+    if (!selectedUser.value || !pendingEditFormData.value) return;
+    
+    try {
+      await updateUser(selectedUser.value._id, pendingEditFormData.value);
+      notifySuccess('Cập nhật người dùng thành công!');
+      isEditModalOpen.value = false;
+      pendingEditFormData.value = null;
+      await fetchUsers();
+    } catch (err: any) {
+      notifyFailed(err.message || 'Không thể cập nhật người dùng');
+    }
+  };
+
+  const handleReload = async () => {
     await fetchUsers();
-  } catch (err: any) {
-    notifyFailed(err.message || 'Không thể cập nhật người dùng');
-  }
-};
+  };
 
-const handleReload = async () => {
-  await fetchUsers();
-};
+  const handleDelete = (user: User) => {
+    handleShowConfirmModal('delete', user);
+  };
 
-const handleDelete = (user: User) => {
-  handleShowConfirmModal('delete', user);
-};
+  const handleReactivate = (user: User) => {
+    handleShowConfirmModal('reactivate', user);
+  };
 
-const handleReactivate = (user: User) => {
-  handleShowConfirmModal('reactivate', user);
-};
-
-const handleDeleteConfirmed = async () => {
-  if (!selectedUser.value) return;
-  
-  try {
-    await deleteUser(selectedUser.value._id);
-    notifySuccess('Khóa tài khoản thành công!');
-    await fetchUsers();
-  } catch (err: any) {
-    notifyFailed(err.message || 'Không thể khóa tài khoản');
-  }
-};
-
-const handleReactivateConfirmed = async () => {
-  if (!selectedUser.value) return;
-  
-  try {
-    await reactivateUser(selectedUser.value._id);
-    notifySuccess('Mở khóa tài khoản thành công!');
-    await fetchUsers();
-  } catch (err: any) {
-    notifyFailed(err.message || 'Không thể mở khóa tài khoản');
-  }
-};
-
-// ===== CONFIRMATION HANDLERS =====
-const handleShowConfirmModal = (action: string, user?: User) => {
-  actionNeedToConfirm.value = action;
-  selectedUser.value = user || null;
-  
-  switch (action) {
-    case 'edit':
-      confirmModalTitle.value = 'Xác nhận cập nhật';
-      confirmModalMessage.value = `Bạn có chắc chắn muốn cập nhật thông tin người dùng <strong>${user?.name}</strong>?`;
-      confirmModalConfirmText.value = 'Cập nhật';
-      confirmModalCancelText.value = 'Hủy';
-      confirmModalButtonClass.value = 'bg-blue-600 hover:bg-blue-700';
-      confirmModalIcon.value = 'info';
-      break;
+  const handleDeleteConfirmed = async () => {
+    if (!selectedUser.value) return;
     
-    case 'delete':
-      confirmModalTitle.value = 'Xác nhận khóa tài khoản';
-      confirmModalMessage.value = `Bạn có chắc chắn muốn khóa tài khoản <strong>${user?.name}</strong>?<br><span class="text-sm text-gray-600">Tài khoản sẽ không thể đăng nhập sau khi bị khóa.</span>`;
-      confirmModalConfirmText.value = 'Khóa tài khoản';
-      confirmModalCancelText.value = 'Hủy';
-      confirmModalButtonClass.value = 'bg-red-600 hover:bg-red-700';
-      confirmModalIcon.value = 'warning';
-      break;
-    
-    case 'reactivate':
-      confirmModalTitle.value = 'Xác nhận mở khóa tài khoản';
-      confirmModalMessage.value = `Bạn có chắc chắn muốn mở khóa tài khoản <strong>${user?.name}</strong>?<br><span class="text-sm text-gray-600">Tài khoản sẽ có thể đăng nhập lại sau khi được mở khóa.</span>`;
-      confirmModalConfirmText.value = 'Mở khóa';
-      confirmModalCancelText.value = 'Hủy';
-      confirmModalButtonClass.value = 'bg-green-600 hover:bg-green-700';
-      confirmModalIcon.value = 'info';
-      break;
-    
-    // Add more cases here for other actions
-    default:
-      confirmModalTitle.value = 'Xác nhận';
-      confirmModalMessage.value = 'Bạn có chắc chắn muốn thực hiện hành động này?';
-      confirmModalConfirmText.value = 'Xác nhận';
-      confirmModalCancelText.value = 'Hủy';
-      confirmModalButtonClass.value = 'bg-blue-600 hover:bg-blue-700';
-      confirmModalIcon.value = 'info';
-  }
-  
-  isConfirmModalOpen.value = true;
-};
+    try {
+      await deleteUser(selectedUser.value._id);
+      notifySuccess('Khóa tài khoản thành công!');
+      await fetchUsers();
+    } catch (err: any) {
+      notifyFailed(err.message || 'Không thể khóa tài khoản');
+    }
+  };
 
-const handleCloseConfirm = () => {
-  isConfirmModalOpen.value = false;
-  actionNeedToConfirm.value = '';
-  selectedUser.value = null;
-};
+  const handleReactivateConfirmed = async () => {
+    if (!selectedUser.value) return;
+    
+    try {
+      await reactivateUser(selectedUser.value._id);
+      notifySuccess('Mở khóa tài khoản thành công!');
+      await fetchUsers();
+    } catch (err: any) {
+      notifyFailed(err.message || 'Không thể mở khóa tài khoản');
+    }
+  };
 
-const handleConfirm = async () => {
-  switch (actionNeedToConfirm.value) {
-    case 'edit':
-      await handleEditConfirmed();
-      break;
+  // ===== CONFIRMATION HANDLERS =====
+  const handleShowConfirmModal = (action: string, user?: User) => {
+    actionNeedToConfirm.value = action;
+    selectedUser.value = user || null;
     
-    case 'delete':
-      await handleDeleteConfirmed();
-      break;
+    switch (action) {
+      case 'edit':
+        confirmModalTitle.value = 'Xác nhận cập nhật';
+        confirmModalMessage.value = `Bạn có chắc chắn muốn cập nhật thông tin người dùng <strong>${user?.name}</strong>?`;
+        confirmModalConfirmText.value = 'Cập nhật';
+        confirmModalCancelText.value = 'Hủy';
+        confirmModalButtonClass.value = 'bg-blue-600 hover:bg-blue-700';
+        confirmModalIcon.value = 'info';
+        break;
+      
+      case 'delete':
+        confirmModalTitle.value = 'Xác nhận khóa tài khoản';
+        confirmModalMessage.value = `Bạn có chắc chắn muốn khóa tài khoản <strong>${user?.name}</strong>?<br><span class="text-sm text-gray-600">Tài khoản sẽ không thể đăng nhập sau khi bị khóa.</span>`;
+        confirmModalConfirmText.value = 'Khóa tài khoản';
+        confirmModalCancelText.value = 'Hủy';
+        confirmModalButtonClass.value = 'bg-red-600 hover:bg-red-700';
+        confirmModalIcon.value = 'warning';
+        break;
+      
+      case 'reactivate':
+        confirmModalTitle.value = 'Xác nhận mở khóa tài khoản';
+        confirmModalMessage.value = `Bạn có chắc chắn muốn mở khóa tài khoản <strong>${user?.name}</strong>?<br><span class="text-sm text-gray-600">Tài khoản sẽ có thể đăng nhập lại sau khi được mở khóa.</span>`;
+        confirmModalConfirmText.value = 'Mở khóa';
+        confirmModalCancelText.value = 'Hủy';
+        confirmModalButtonClass.value = 'bg-green-600 hover:bg-green-700';
+        confirmModalIcon.value = 'info';
+        break;
+      
+      // Add more cases here for other actions
+      default:
+        confirmModalTitle.value = 'Xác nhận';
+        confirmModalMessage.value = 'Bạn có chắc chắn muốn thực hiện hành động này?';
+        confirmModalConfirmText.value = 'Xác nhận';
+        confirmModalCancelText.value = 'Hủy';
+        confirmModalButtonClass.value = 'bg-blue-600 hover:bg-blue-700';
+        confirmModalIcon.value = 'info';
+    }
     
-    case 'reactivate':
-      await handleReactivateConfirmed();
-      break;
+    isConfirmModalOpen.value = true;
+  };
+
+  const handleCloseConfirm = () => {
+    isConfirmModalOpen.value = false;
+    actionNeedToConfirm.value = '';
+    selectedUser.value = null;
+  };
+
+  const handleConfirm = async () => {
+    switch (actionNeedToConfirm.value) {
+      case 'edit':
+        await handleEditConfirmed();
+        break;
+      
+      case 'delete':
+        await handleDeleteConfirmed();
+        break;
+      
+      case 'reactivate':
+        await handleReactivateConfirmed();
+        break;
+      
+      // Add more cases here for other actions
+      default:
+        console.warn('Unknown action:', actionNeedToConfirm.value);
+    }
     
-    // Add more cases here for other actions
-    default:
-      console.warn('Unknown action:', actionNeedToConfirm.value);
-  }
-  
-  handleCloseConfirm();
-};
+    handleCloseConfirm();
+  };
 
 </script>
 
@@ -234,9 +260,38 @@ const handleConfirm = async () => {
       </button>
     </div>
 
+    <!-- Tabs -->
+    <div class="mb-8 border-b border-gray-100 relative">
+      <div class="overflow-x-auto scrollbar-hide -mb-px">
+        <nav class="flex space-x-6 min-w-max px-1" aria-label="Tabs">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            @click="activeTab = tab.id"
+            :class="[
+              activeTab === tab.id
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-400 hover:text-gray-600 hover:border-gray-300',
+              'whitespace-nowrap py-4 px-2 border-b-2 font-bold text-sm flex items-center gap-2.5 transition-all duration-200'
+            ]"
+          >
+            <span class="tracking-tight">{{ tab.label }}</span>
+            <span
+              :class="[
+                activeTab === tab.id ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500',
+                'py-0.5 px-2.5 rounded-full text-[10px] font-bold transition-colors'
+              ]"
+            >
+              {{ getTabCount(tab.id) }}
+            </span>
+          </button>
+        </nav>
+      </div>
+    </div>
+
     <!-- User List Table -->
     <UserList 
-      :users="filteredUsers" 
+      :users="displayedUsers" 
       :loading="loading"
       @edit="handleEdit"
       @delete="handleDelete"

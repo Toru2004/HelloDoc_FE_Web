@@ -77,8 +77,8 @@ const renderStatusCell = (row: News) => {
   const isVisible = !row.isHidden;
   const statusText = isVisible ? 'Hiển thị' : 'Đã ẩn';
   const statusClass = isVisible 
-    ? 'bg-green-50 text-green-700 border border-green-200' 
-    : 'bg-gray-50 text-gray-700 border border-gray-200';
+    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+    : 'bg-gray-50 text-gray-700 border-gray-200';
   
   const iconPath = isVisible
     ? 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'
@@ -86,10 +86,10 @@ const renderStatusCell = (row: News) => {
   
   return h('div', { class: 'flex items-center' }, [
     h('span', {
-      class: `inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ${statusClass}`
+      class: `inline-flex items-center justify-center gap-1.5 w-36 py-1.5 text-[10px] font-bold rounded-lg border shadow-sm transition-all duration-200 hover:scale-105 ${statusClass}`
     }, [
       h('svg', {
-        class: 'w-3.5 h-3.5',
+        class: 'w-3.5 h-3.5 flex-shrink-0',
         fill: 'none',
         viewBox: '0 0 24 24',
         stroke: 'currentColor',

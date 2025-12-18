@@ -24,43 +24,49 @@ const formatDate = (dateString: string) => {
 };
 
 // Get status badge color
-const getStatusBadgeColor = (status: string) => {
-  const colorMap: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    processing: 'bg-blue-100 text-blue-800',
-    closed: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
+const getStatusConfig = (status: string) => {
+  const s = status.toLowerCase();
+  const configs: Record<string, { label: string; classes: string; icon: string }> = {
+    opened: {
+      label: 'Chờ xử lý',
+      classes: 'bg-amber-50 text-amber-700 border-amber-200',
+      icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+    },
+    processing: {
+      label: 'Đang xử lý',
+      classes: 'bg-blue-50 text-blue-700 border-blue-200',
+      icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+    },
+    closed: {
+      label: 'Đã đóng',
+      classes: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+    },
+    rejected: {
+      label: 'Từ chối',
+      classes: 'bg-red-50 text-red-700 border-red-200',
+      icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'
+    },
   };
-  return colorMap[status.toLowerCase()] || 'bg-gray-100 text-gray-800';
-};
-
-// Get status text
-const getStatusText = (status: string) => {
-  const statusMap: Record<string, string> = {
-    pending: 'Chờ xử lý',
-    opened: 'Đang chờ xử lý',
-    processing: 'Đang xử lý',
-    closed: 'Đã đóng',
-    rejected: 'Từ chối',
+  return configs[s] || {
+    label: status,
+    classes: 'bg-gray-50 text-gray-700 border-gray-200',
+    icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
   };
-  return statusMap[status.toLowerCase()] || status;
-};
-
-// Get type badge color
-const getTypeBadgeColor = (type: string) => {
-  const colorMap: Record<string, string> = {
-    'Bài viết': 'bg-purple-100 text-purple-800',
-    'Bình luận': 'bg-indigo-100 text-indigo-800',
-    'Người dùng': 'bg-orange-100 text-orange-800',
-    'Bác sĩ': 'bg-teal-100 text-teal-800',
-  };
-  return colorMap[type] || 'bg-gray-100 text-gray-800';
 };
 
 // Render type cell
 const renderTypeCell = (row: Report) => {
+  const typeConfigs: Record<string, string> = {
+    'Bài viết': 'bg-purple-50 text-purple-700 border-purple-200',
+    'Bình luận': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    'Người dùng': 'bg-orange-50 text-orange-700 border-orange-200',
+    'Bác sĩ': 'bg-teal-50 text-teal-700 border-teal-200',
+  };
+  const classes = typeConfigs[row.type] || 'bg-gray-50 text-gray-700 border-gray-200';
+
   return h('span', {
-    class: `px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeBadgeColor(row.type)}`
+    class: `inline-flex items-center justify-center gap-1.5 w-32 py-1 text-[10px] font-bold rounded-lg border shadow-sm ${classes}`
   }, row.type);
 };
 
@@ -115,9 +121,26 @@ const renderReporterCell = (row: Report) => {
 
 // Render status cell
 const renderStatusCell = (row: Report) => {
+  const config = getStatusConfig(row.status);
+  
   return h('span', {
-    class: `px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeColor(row.status)}`
-  }, getStatusText(row.status));
+    class: `inline-flex items-center justify-center gap-1.5 w-36 py-1.5 text-[10px] font-bold rounded-lg border shadow-sm transition-all duration-200 hover:scale-105 ${config.classes}`
+  }, [
+    h('svg', {
+      class: 'w-3.5 h-3.5 flex-shrink-0',
+      fill: 'none',
+      viewBox: '0 0 24 24',
+      stroke: 'currentColor',
+      'stroke-width': '2'
+    }, [
+      h('path', {
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round',
+        d: config.icon
+      })
+    ]),
+    config.label
+  ]);
 };
 
 // Render time cell

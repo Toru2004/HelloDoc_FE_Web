@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import SidePanelModal from '@/components/molecules/SidePanelModal.vue';
 import FormInput from '@/components/atoms/FormInput.vue';
+import FormSelect from '@/components/atoms/FormSelect.vue';
 import type { User, UpdateUserDto } from '@/domain/entities/user';
 
 interface Props {
@@ -22,7 +23,15 @@ const formData = ref<UpdateUserDto>({
   email: '',
   phone: '',
   address: '',
+  role: '',
 });
+
+const roleOptions = [
+  { value: 'User', label: 'Người bình thường' },
+  { value: 'Blind', label: 'Người khiếm thị' },
+  { value: 'Deaf', label: 'Người khiếm thính' },
+  { value: 'Mute', label: 'Người khiếm khẩu' },
+];
 
 const loading = ref(false);
 const error = ref('');
@@ -39,6 +48,7 @@ const originalValues = ref<UpdateUserDto>({
   email: '',
   phone: '',
   address: '',
+  role: '',
 });
 
 // Watch for user changes to populate form
@@ -49,6 +59,7 @@ watch(() => props.user, (newUser) => {
       email: newUser.email,
       phone: newUser.phone,
       address: newUser.address || '',
+      role: newUser.role,
     };
     
     // Store original values
@@ -57,6 +68,7 @@ watch(() => props.user, (newUser) => {
       email: newUser.email,
       phone: newUser.phone,
       address: newUser.address || '',
+      role: newUser.role,
     };
   }
 }, { immediate: true });
@@ -110,6 +122,7 @@ const hasChanges = computed(() => {
   return formData.value.name !== originalValues.value.name ||
          formData.value.email !== originalValues.value.email ||
          formData.value.phone !== originalValues.value.phone ||
+         formData.value.role !== originalValues.value.role ||
          formData.value.address !== originalValues.value.address;
 });
 
@@ -204,6 +217,14 @@ const handleClose = () => {
         placeholder="HCM City"
         :required="false"
         :error="errors.address"
+        :disabled="loading"
+      />
+
+      <FormSelect
+        v-model="formData.role!"
+        label="Vai trò"
+        :options="roleOptions"
+        :required="true"
         :disabled="loading"
       />
     </form>

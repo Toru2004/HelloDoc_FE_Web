@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import SidePanelModal from '@/components/molecules/SidePanelModal.vue';
 import FormInput from '@/components/atoms/FormInput.vue';
+import FormSelect from '@/components/atoms/FormSelect.vue';
 import type { CreateUserDto } from '@/domain/entities/user';
 
 interface Props {
@@ -21,7 +22,15 @@ const formData = ref<CreateUserDto>({
   email: '',
   phone: '',
   password: '',
+  role: 'User',
 });
+
+const roleOptions = [
+  { value: 'User', label: 'Người bình thường' },
+  { value: 'Blind', label: 'Người khiếm thị' },
+  { value: 'Deaf', label: 'Người khiếm thính' },
+  { value: 'Mute', label: 'Người khiếm khẩu' },
+];
 
 const loading = ref(false);
 const error = ref('');
@@ -187,6 +196,14 @@ const handleClose = () => {
         placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
         :required="true"
         :error="errors.password"
+        :disabled="loading"
+      />
+
+      <FormSelect
+        v-model="formData.role!"
+        label="Vai trò"
+        :options="roleOptions"
+        :required="true"
         :disabled="loading"
       />
     </form>
