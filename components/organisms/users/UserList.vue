@@ -11,6 +11,7 @@ interface Emits {
   (e: 'edit', user: User): void;
   (e: 'delete', user: User): void;
   (e: 'reactivate', user: User): void;
+  (e: 'view-image', url: string): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -83,7 +84,8 @@ const renderUserCell = (row: User) => {
         ? h('img', {
             src: row.avatarURL,
             alt: row.name,
-            class: 'h-10 w-10 rounded-full object-cover'
+            class: 'h-10 w-10 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity',
+            onClick: () => emit('view-image', row.avatarURL!)
           })
         : h('div', {
             class: 'h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold'

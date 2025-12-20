@@ -4,6 +4,7 @@ import PageOverview from "@/components/molecules/PageOverview.vue";
 import AddUserModal from "@/components/modal/AddUserModal.vue";
 import EditUserModal from "@/components/modal/EditUserModal.vue";
 import ConfirmActionModal from "@/components/modal/ConfirmActionModal.vue";
+import ImageViewerModal from "@/components/modal/ImageViewerModal.vue";
 import type { CreateUserDto, UpdateUserDto, User } from "@/domain/entities/user";
 
 definePageMeta({
@@ -31,6 +32,15 @@ const confirmModalConfirmText = ref('Xác nhận');
 const confirmModalCancelText = ref('Hủy');
 const confirmModalButtonClass = ref('bg-blue-600 hover:bg-blue-700');
 const confirmModalIcon = ref<'warning' | 'info' | 'success' | 'error'>('info');
+
+// View Image state
+const isViewerOpen = ref(false);
+const selectedImageUrl = ref('');
+
+const handleViewImage = (url: string) => {
+  selectedImageUrl.value = url;
+  isViewerOpen.value = true;
+};
 
 // Fetch users on component mount
 onMounted(async () => {
@@ -296,6 +306,7 @@ onMounted(async () => {
       @edit="handleEdit"
       @delete="handleDelete"
       @reactivate="handleReactivate"
+      @view-image="handleViewImage"
     />
 
     <!-- Add User Modal -->
@@ -324,6 +335,13 @@ onMounted(async () => {
       :icon="confirmModalIcon"
       @close="handleCloseConfirm"
       @confirm="handleConfirm"
+    />
+
+    <!-- Image Viewer Modal -->
+    <ImageViewerModal
+      :is-open="isViewerOpen"
+      :image-url="selectedImageUrl"
+      @close="isViewerOpen = false"
     />
   </div>
 </template>
