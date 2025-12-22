@@ -79,9 +79,9 @@ const openOnlineUsersModal = () => {
   
   modalItems.value = users.map(u => ({
     id: u._id,
-    name: u.fullName || 'Unknown User',
+    name: u.name || 'Unknown User',
     email: u.email,
-    avatar: u.avatar,
+    avatar: u.avatarURL,
     role: 'User'
   }));
   
@@ -107,9 +107,9 @@ const openOnlineDoctorsModal = () => {
 
   modalItems.value = doctors.map(d => ({
     id: d._id,
-    name: d.fullName || 'Unknown Doctor',
+    name: d.name || 'Unknown Doctor',
     email: d.email,
-    avatar: d.avatar,
+    avatar: d.avatarURL,
     role: 'Doctor'
   }));
   
