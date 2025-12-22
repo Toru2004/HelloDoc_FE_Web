@@ -11,6 +11,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  data: () => [],
   loading: false,
   emptyMessage: 'Không có dữ liệu',
   emptyIcon: 'inbox',
@@ -70,7 +71,7 @@ const getAlignClass = (align?: 'left' | 'center' | 'right') => {
     </div>
 
     <!-- Data Table -->
-    <div v-else-if="data.length > 0">
+    <div v-else-if="data && data.length > 0">
       <div class="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 w-full">
         <table class="w-full table-auto divide-y divide-gray-200">
           <!-- Table Header -->
@@ -127,9 +128,9 @@ const getAlignClass = (align?: 'left' | 'center' | 'right') => {
 
       <!-- Summary -->
       <div v-if="showSummary" class="bg-gray-50 px-6 py-3 border-t border-gray-200">
-        <slot name="summary" :total="data.length">
+        <slot name="summary" :total="data?.length || 0">
           <p class="text-sm text-gray-600">
-            {{ summaryLabel }}: <span class="font-semibold">{{ data.length }}</span>
+            {{ summaryLabel }}: <span class="font-semibold">{{ data?.length || 0 }}</span>
           </p>
         </slot>
       </div>

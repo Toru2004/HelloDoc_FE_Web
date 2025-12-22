@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import ReportList from "@/components/organisms/reports/ReportList.vue";
 import PageOverview from "@/components/molecules/PageOverview.vue";
+import Pagination from "@/components/molecules/Pagination.vue";
 
 definePageMeta({
   layout: "default",
@@ -10,31 +11,39 @@ useHead({
   title: 'Quản lý báo cáo - HelloDoc',
 });
 
-const api = useApi();
-const reports = ref<Report[]>([]);
-const loading = ref(false);
-const error = ref('');
+const { 
+  reports, 
+  loading, 
+  error, 
+  totalReports,
+  limit,
+  offset,
+  searchText,
+  fetchReports 
+} = useReportViewModel();
+
+const currentPage = ref(1);
+
+watch([currentPage, limit], () => {
+  offset.value = (currentPage.value - 1) * limit.value;
+  fetchReports();
+});
+
+const handleSearch = (val: string) => {
+  searchText.value = val;
+  offset.value = 0;
+  currentPage.value = 1;
+  fetchReports();
+};
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+};
 
 // Fetch reports on component mount
 onMounted(async () => {
   await fetchReports();
 });
-
-const fetchReports = async () => {
-  loading.value = true;
-  error.value = '';
-  
-  try {
-    const response = await api.get<Report[]>('/report');
-    reports.value = response;
-    console.log('Fetched reports:', response.length);
-  } catch (err: any) {
-    error.value = err.message || 'Không thể tải danh sách báo cáo';
-    console.error('Error fetching reports:', err);
-  } finally {
-    loading.value = false;
-  }
-};
 
 const handleAdd = () => {
   // TODO: Implement add report functionality
@@ -51,6 +60,9 @@ const handleAdd = () => {
       add-label="Thêm báo cáo"
       :show-add="false"
       :loading="loading"
+      show-search
+      v-model:search-text="searchText"
+      @search="handleSearch"
       @reload="fetchReports"
     />
 
@@ -74,6 +86,17 @@ const handleAdd = () => {
     </div>
 
     <!-- Report List -->
-    <ReportList :reports="reports" :loading="loading" />
+    <div class="bg-white rounded-t-xl shadow-sm border border-gray-100 overflow-hidden">
+      <ReportList :reports="reports" :loading="loading" />
+    </div>
+
+    <!-- Pagination -->
+    <Pagination
+      v-model:current-page="currentPage"
+      v-model:items-per-page="limit"
+      :total-items="totalReports"
+      :loading="loading"
+      @page-change="handlePageChange"
+    />
   </div>
 </template>

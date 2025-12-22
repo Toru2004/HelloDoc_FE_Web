@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import UserList from "@/components/organisms/users/UserList.vue";
 import PageOverview from "@/components/molecules/PageOverview.vue";
+import Pagination from "@/components/molecules/Pagination.vue";
 import AddUserModal from "@/components/modal/AddUserModal.vue";
 import EditUserModal from "@/components/modal/EditUserModal.vue";
 import ConfirmActionModal from "@/components/modal/ConfirmActionModal.vue";
@@ -15,8 +16,40 @@ useHead({
   title: 'Quản lý người dùng - HelloDoc',
 });
 
-const { users, loading, error, fetchUsers, createUser, updateUser, deleteUser, reactivateUser } = useUserViewModel();
+const { 
+  users, 
+  loading, 
+  error, 
+  totalUsers,
+  limit,
+  offset,
+  searchText,
+  fetchUsers, 
+  createUser, 
+  updateUser, 
+  deleteUser, 
+  reactivateUser 
+} = useUserViewModel();
 const { notifySuccess, notifyFailed } = useNotification();
+
+const currentPage = ref(1);
+
+// Watch for search and pagination changes
+watch([currentPage, limit], () => {
+  offset.value = (currentPage.value - 1) * limit.value;
+  fetchUsers();
+});
+
+const handleSearch = (val: string) => {
+  searchText.value = val;
+  offset.value = 0;
+  currentPage.value = 1; // Reset to first page on search
+  fetchUsers(); // Initial fetch on search
+};
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+};
 
 // Modal states
 const isAddModalOpen = ref(false);
@@ -247,7 +280,10 @@ onMounted(async () => {
       description="Danh sách người dùng trong hệ thống HelloDoc"
       add-label="Thêm người dùng"
       :loading="loading"
-      @reload="handleReload"
+      show-search
+      v-model:search-text="searchText"
+      @search="handleSearch"
+      @reload="fetchUsers"
       @add="handleAdd"
     />
 
@@ -300,13 +336,24 @@ onMounted(async () => {
     </div>
 
     <!-- User List Table -->
-    <UserList 
-      :users="displayedUsers" 
+    <div class="bg-white rounded-t-xl shadow-sm border border-gray-100 overflow-hidden">
+      <UserList 
+        :users="displayedUsers" 
+        :loading="loading"
+        @edit="handleEdit"
+        @delete="handleDelete"
+        @reactivate="handleReactivate"
+        @view-image="handleViewImage"
+      />
+    </div>
+
+    <!-- Pagination -->
+    <Pagination
+      v-model:current-page="currentPage"
+      v-model:items-per-page="limit"
+      :total-items="totalUsers"
       :loading="loading"
-      @edit="handleEdit"
-      @delete="handleDelete"
-      @reactivate="handleReactivate"
-      @view-image="handleViewImage"
+      @page-change="handlePageChange"
     />
 
     <!-- Add User Modal -->

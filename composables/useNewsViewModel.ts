@@ -7,16 +7,32 @@ export const useNewsViewModel = () => {
   const repository = new NewsRepositoryImpl(client);
 
   const news = ref<News[]>([]);
-  const filteredNews = computed(() => news.value);
   const loading = ref(false);
   const error = ref('');
+  const totalNews = ref(0);
+  const limit = ref(10);
+  if (process.client) {
+    const savedLimit = localStorage.getItem('news_page_limit');
+    if (savedLimit) limit.value = parseInt(savedLimit);
+  }
+
+  watch(limit, (newLimit) => {
+    if (process.client) {
+      localStorage.setItem('news_page_limit', newLimit.toString());
+    }
+  });
+
+  const offset = ref(0);
+  const searchText = ref('');
 
   const fetchNews = async () => {
     loading.value = true;
     error.value = '';
     try {
-      news.value = await repository.getAll();
-      console.log('Fetched news:', news.value.length);
+      const response = await repository.getAllFiltered(limit.value, offset.value, searchText.value);
+      news.value = response.data || [];
+      totalNews.value = response.total || 0;
+      console.log('Fetched filtered news:', news.value.length, 'Total:', totalNews.value);
     } catch (err: any) {
       error.value = err.message || 'Không thể tải tin tức';
       console.error('Error fetching news:', err);
@@ -77,9 +93,12 @@ export const useNewsViewModel = () => {
 
   return {
     news,
-    filteredNews,
     loading,
     error,
+    totalNews,
+    limit,
+    offset,
+    searchText,
     fetchNews,
     createNews,
     updateNews,

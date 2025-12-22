@@ -1,12 +1,17 @@
 import type { INewsRepository } from '@/domain/repositories/news_repository';
 import type { News, CreateNewsDto, UpdateNewsDto } from '@/domain/entities/news';
 import type { IHttpClient } from '@/data/datasources/http_client';
+import type { PaginatedResponse } from '@/domain/entities/pagination';
 
 export class NewsRepositoryImpl implements INewsRepository {
   constructor(private client: IHttpClient) {}
 
   async getAll(): Promise<News[]> {
     return await this.client.get<News[]>('/news');
+  }
+
+  async getAllFiltered(limit: number, offset: number, searchText: string): Promise<PaginatedResponse<News>> {
+    return await this.client.get<PaginatedResponse<News>>(`/news/get-all-filtered?limit=${limit}&offset=${offset}&searchText=${searchText}`);
   }
 
   async create(newsData: CreateNewsDto): Promise<News> {

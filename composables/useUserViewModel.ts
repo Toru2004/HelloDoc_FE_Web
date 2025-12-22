@@ -9,18 +9,30 @@ export const useUserViewModel = () => {
   const users = ref<User[]>([]);
   const loading = ref(false);
   const error = ref('');
+  const totalUsers = ref(0);
+  const limit = ref(10);
+  if (process.client) {
+    const savedLimit = localStorage.getItem('user_page_limit');
+    if (savedLimit) limit.value = parseInt(savedLimit);
+  }
 
-  const filteredUsers = computed(() => {
-    return users.value.filter(user => user.role.toLowerCase() === 'user');
+  watch(limit, (newLimit) => {
+    if (process.client) {
+      localStorage.setItem('user_page_limit', newLimit.toString());
+    }
   });
+
+  const offset = ref(0);
+  const searchText = ref('');
 
   const fetchUsers = async () => {
     loading.value = true;
     error.value = '';
     try {
-      const response = await repository.getAll();
-      users.value = response;
-      console.log('Fetched all users:', response.length);
+      const response = await repository.getAllFiltered(limit.value, offset.value, searchText.value);
+      users.value = response.data || [];
+      totalUsers.value = response.total || 0;
+      console.log('Fetched filtered users:', users.value.length, 'Total:', totalUsers.value);
     } catch (err: any) {
       error.value = err.message || 'Không thể tải danh sách người dùng';
       console.error('Error fetching users:', err);
@@ -93,9 +105,12 @@ export const useUserViewModel = () => {
 
   return {
     users,
-    filteredUsers,
     loading,
     error,
+    totalUsers,
+    limit,
+    offset,
+    searchText,
     fetchUsers,
     createUser,
     updateUser,

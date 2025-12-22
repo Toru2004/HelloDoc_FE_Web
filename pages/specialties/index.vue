@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import SpecialtyList from "@/components/organisms/specialties/SpecialtyList.vue";
 import PageOverview from "@/components/molecules/PageOverview.vue";
+import Pagination from "@/components/molecules/Pagination.vue";
 import AddSpecialtyModal from "@/components/modal/AddSpecialtyModal.vue";
 import EditSpecialtyModal from "@/components/modal/EditSpecialtyModal.vue";
 import ConfirmActionModal from "@/components/modal/ConfirmActionModal.vue";
@@ -13,8 +14,39 @@ useHead({
   title: 'Quản lý chuyên khoa - HelloDoc',
 });
 
-const { specialties, loading, error, fetchSpecialties, createSpecialty, updateSpecialty, deleteSpecialty } = useSpecialtyViewModel();
+const { 
+  specialties, 
+  loading, 
+  error, 
+  totalSpecialties,
+  limit,
+  offset,
+  searchText,
+  fetchSpecialties, 
+  createSpecialty, 
+  updateSpecialty, 
+  deleteSpecialty 
+} = useSpecialtyViewModel();
 const { notifySuccess, notifyFailed } = useNotification();
+
+const currentPage = ref(1);
+
+// Watch for pagination changes
+watch([currentPage, limit], () => {
+  offset.value = (currentPage.value - 1) * limit.value;
+  fetchSpecialties();
+});
+
+const handleSearch = (val: string) => {
+  searchText.value = val;
+  offset.value = 0;
+  currentPage.value = 1;
+  fetchSpecialties();
+};
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+};
 
 // Modal states
 const isAddModalOpen = ref(false);
@@ -181,16 +213,30 @@ const handleDeleteConfirmed = async () => {
       description="Danh sách các chuyên khoa trong hệ thống HelloDoc"
       add-label="Thêm chuyên khoa"
       :loading="loading"
-      @reload="handleReload"
+      show-search
+      v-model:search-text="searchText"
+      @search="handleSearch"
+      @reload="fetchSpecialties"
       @add="handleAdd"
     />
 
     <!-- Specialty List -->
-    <SpecialtyList 
-      :specialties="specialties" 
+    <div class="bg-white rounded-t-xl shadow-sm border border-gray-100 overflow-hidden">
+      <SpecialtyList 
+        :specialties="specialties" 
+        :loading="loading"
+        @edit="handleEdit"
+        @delete="handleDelete"
+      />
+    </div>
+
+    <!-- Pagination -->
+    <Pagination
+      v-model:current-page="currentPage"
+      v-model:items-per-page="limit"
+      :total-items="totalSpecialties"
       :loading="loading"
-      @edit="handleEdit"
-      @delete="handleDelete"
+      @page-change="handlePageChange"
     />
 
     <!-- Add Specialty Modal -->

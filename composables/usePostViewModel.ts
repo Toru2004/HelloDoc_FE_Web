@@ -7,16 +7,21 @@ export const usePostViewModel = () => {
   const repository = new PostRepositoryImpl(client);
 
   const posts = ref<Post[]>([]);
-  const filteredPosts = computed(() => posts.value);
   const loading = ref(false);
   const error = ref('');
+  const totalPosts = ref(0);
+  const limit = ref(10);
+  const offset = ref(0);
+  const searchText = ref('');
 
   const fetchPosts = async () => {
     loading.value = true;
     error.value = '';
     try {
-      posts.value = await repository.getAll();
-      console.log('Fetched posts:', posts.value.length);
+      const response = await repository.getAllFiltered(limit.value, offset.value, searchText.value);
+      posts.value = response.data || [];
+      totalPosts.value = response.total || 0;
+      console.log('Fetched filtered posts:', posts.value.length, 'Total:', totalPosts.value);
     } catch (err: any) {
       error.value = err.message || 'Không thể tải bài viết';
       console.error('Error fetching posts:', err);
@@ -47,9 +52,12 @@ export const usePostViewModel = () => {
 
   return {
     posts,
-    filteredPosts,
     loading,
     error,
+    totalPosts,
+    limit,
+    offset,
+    searchText,
     fetchPosts,
     deletePost,
   };

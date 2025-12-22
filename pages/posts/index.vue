@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PostList from "@/components/organisms/posts/PostList.vue";
 import PageOverview from "@/components/molecules/PageOverview.vue";
+import Pagination from "@/components/molecules/Pagination.vue";
 import ConfirmActionModal from "@/components/modal/ConfirmActionModal.vue";
 import type { Post } from "@/domain/entities/post";
 
@@ -12,8 +13,37 @@ useHead({
   title: 'Quản lý bài viết - HelloDoc',
 });
 
-const { posts, filteredPosts, loading, error, fetchPosts, deletePost } = usePostViewModel();
+const { 
+  posts, 
+  loading, 
+  error, 
+  totalPosts,
+  limit,
+  offset,
+  searchText,
+  fetchPosts, 
+  deletePost 
+} = usePostViewModel();
 const { notifySuccess, notifyFailed } = useNotification();
+
+const currentPage = ref(1);
+
+// Watch for pagination and limit changes
+watch([currentPage, limit], () => {
+  offset.value = (currentPage.value - 1) * limit.value;
+  fetchPosts();
+});
+
+const handleSearch = (val: string) => {
+  searchText.value = val;
+  offset.value = 0;
+  currentPage.value = 1;
+  fetchPosts();
+};
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+};
 
 // Modal states
 const isConfirmModalOpen = ref(false);
@@ -68,7 +98,10 @@ const handleConfirm = async () => {
       description="Danh sách bài viết trong hệ thống HelloDoc"
       :loading="loading"
       :show-add="false"
-      @reload="handleReload"
+      show-search
+      v-model:search-text="searchText"
+      @search="handleSearch"
+      @reload="fetchPosts"
     />
 
     <!-- Error State -->
@@ -90,11 +123,21 @@ const handleConfirm = async () => {
       </button>
     </div>
 
-    <!-- Posts List -->
-    <PostList 
-      :posts="filteredPosts" 
+    <div class="bg-white rounded-t-xl shadow-sm border border-gray-100 overflow-hidden">
+      <PostList 
+        :posts="posts" 
+        :loading="loading"
+        @delete="handleDelete"
+      />
+    </div>
+
+    <!-- Pagination -->
+    <Pagination
+      v-model:current-page="currentPage"
+      v-model:items-per-page="limit"
+      :total-items="totalPosts"
       :loading="loading"
-      @delete="handleDelete"
+      @page-change="handlePageChange"
     />
 
     <!-- Confirmation Modal -->

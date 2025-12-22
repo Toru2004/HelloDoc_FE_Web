@@ -1,12 +1,17 @@
 import type { IUserRepository } from '@/domain/repositories/user_repository';
 import type { User, CreateUserDto, UpdateUserDto } from '@/domain/entities/user';
 import type { IHttpClient } from '@/data/datasources/http_client';
+import type { PaginatedResponse } from '@/domain/entities/pagination';
 
 export class UserRepositoryImpl implements IUserRepository {
   constructor(private client: IHttpClient) {}
 
   async getAll(): Promise<User[]> {
     return await this.client.get<User[]>('/user');
+  }
+
+  async getAllFiltered(limit: number, offset: number, searchText: string): Promise<PaginatedResponse<User>> {
+    return await this.client.get<PaginatedResponse<User>>(`/user/get-all-filtered?limit=${limit}&offset=${offset}&searchText=${searchText}`);
   }
 
   async create(userData: CreateUserDto): Promise<User> {

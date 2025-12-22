@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import DoctorList from "@/components/organisms/doctors/DoctorList.vue";
 import PageOverview from "@/components/molecules/PageOverview.vue";
+import Pagination from "@/components/molecules/Pagination.vue";
 
 definePageMeta({
   layout: "default",
@@ -10,7 +11,35 @@ useHead({
   title: 'Quản lý bác sĩ - HelloDoc',
 });
 
-const { doctors, loading, error, fetchDoctors } = useDoctorViewModel();
+const { 
+  doctors, 
+  loading, 
+  error, 
+  totalDoctors,
+  limit,
+  offset,
+  searchText,
+  fetchDoctors 
+} = useDoctorViewModel();
+
+const currentPage = ref(1);
+
+// Watch for pagination changes
+watch([currentPage, limit], () => {
+  offset.value = (currentPage.value - 1) * limit.value;
+  fetchDoctors();
+});
+
+const handleSearch = (val: string) => {
+  searchText.value = val;
+  offset.value = 0;
+  currentPage.value = 1;
+  fetchDoctors();
+};
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+};
 
 // Fetch doctors on component mount
 onMounted(async () => {
@@ -32,6 +61,9 @@ const handleAdd = () => {
       add-label="Thêm bác sĩ"
       :show-add="false"
       :loading="loading"
+      show-search
+      v-model:search-text="searchText"
+      @search="handleSearch"
       @reload="fetchDoctors"
       @add="handleAdd"
     />
@@ -56,6 +88,17 @@ const handleAdd = () => {
     </div>
 
     <!-- Doctor List Table -->
-    <DoctorList :doctors="doctors" :loading="loading" />
+    <div class="bg-white rounded-t-xl shadow-sm border border-gray-100 overflow-hidden">
+      <DoctorList :doctors="doctors" :loading="loading" />
+    </div>
+
+    <!-- Pagination -->
+    <Pagination
+      v-model:current-page="currentPage"
+      v-model:items-per-page="limit"
+      :total-items="totalDoctors"
+      :loading="loading"
+      @page-change="handlePageChange"
+    />
   </div>
 </template>

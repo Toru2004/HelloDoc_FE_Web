@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import NewsList from "@/components/organisms/news/NewsList.vue";
 import PageOverview from "@/components/molecules/PageOverview.vue";
+import Pagination from "@/components/molecules/Pagination.vue";
 import ConfirmActionModal from "@/components/modal/ConfirmActionModal.vue";
 import EditNewsModal from "@/components/modal/EditNewsModal.vue";
 import AddNewsModal from "@/components/modal/AddNewsModal.vue";
@@ -14,8 +15,39 @@ useHead({
   title: 'Quản lý tin tức - HelloDoc',
 });
 
-const { news, filteredNews, loading, error, fetchNews, createNews, updateNews, deleteNews } = useNewsViewModel();
+const { 
+  news, 
+  loading, 
+  error, 
+  totalNews,
+  limit,
+  offset,
+  searchText,
+  fetchNews, 
+  createNews, 
+  updateNews, 
+  deleteNews 
+} = useNewsViewModel();
 const { notifySuccess, notifyFailed } = useNotification();
+
+const currentPage = ref(1);
+
+// Watch for pagination changes
+watch([currentPage, limit], () => {
+  offset.value = (currentPage.value - 1) * limit.value;
+  fetchNews();
+});
+
+const handleSearch = (val: string) => {
+  searchText.value = val;
+  offset.value = 0;
+  currentPage.value = 1;
+  fetchNews();
+};
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+};
 
 // Modal states
 const isConfirmModalOpen = ref(false);
@@ -113,10 +145,12 @@ const handleConfirm = async () => {
       title="Quản lý tin tức"
       description="Danh sách tin tức trong hệ thống HelloDoc"
       :loading="loading"
-      :show-add-button="true"
-      add-button-text="Tạo tin tức"
+      add-label="Tạo tin tức"
+      show-search
+      v-model:search-text="searchText"
+      @search="handleSearch"
       @add="handleAdd"
-      @reload="handleReload"
+      @reload="fetchNews"
     />
 
     <!-- Error State -->
@@ -139,11 +173,22 @@ const handleConfirm = async () => {
     </div>
 
     <!-- News List -->
-    <NewsList 
-      :news="filteredNews" 
+    <div class="bg-white rounded-t-xl shadow-sm border border-gray-100 overflow-hidden">
+      <NewsList 
+        :news="news" 
+        :loading="loading"
+        @edit="handleEdit"
+        @delete="handleDelete"
+      />
+    </div>
+
+    <!-- Pagination -->
+    <Pagination
+      v-model:current-page="currentPage"
+      v-model:items-per-page="limit"
+      :total-items="totalNews"
       :loading="loading"
-      @edit="handleEdit"
-      @delete="handleDelete"
+      @page-change="handlePageChange"
     />
 
     <!-- Add News Modal -->

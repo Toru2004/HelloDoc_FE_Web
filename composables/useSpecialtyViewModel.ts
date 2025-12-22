@@ -11,13 +11,19 @@ export const useSpecialtyViewModel = () => {
   const specialties = ref<Specialty[]>([]);
   const loading = ref(false);
   const error = ref('');
+  const totalSpecialties = ref(0);
+  const limit = ref(10);
+  const offset = ref(0);
+  const searchText = ref('');
 
   // Actions
   const fetchSpecialties = async () => {
     loading.value = true;
     error.value = '';
     try {
-      specialties.value = await repository.getAll();
+      const response = await repository.getAllFiltered(limit.value, offset.value, searchText.value);
+      specialties.value = response.data || [];
+      totalSpecialties.value = response.total || 0;
     } catch (err: any) {
       error.value = err.message || 'Không thể tải danh sách chuyên khoa';
       console.error('Error fetching specialties:', err);
@@ -69,6 +75,10 @@ export const useSpecialtyViewModel = () => {
     specialties,
     loading,
     error,
+    totalSpecialties,
+    limit,
+    offset,
+    searchText,
     fetchSpecialties,
     createSpecialty,
     updateSpecialty,
