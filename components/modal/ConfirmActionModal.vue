@@ -88,73 +88,75 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Transition name="modal">
-    <div
-      v-if="isOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
-      @click.self="handleClose"
-    >
-      <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
-        <!-- Header -->
-        <div class="p-6 border-b border-gray-200">
-          <div class="flex items-center gap-3">
-            <div 
-              class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
-              :class="iconConfig.bgClass"
-            >
-              <svg 
-                class="w-6 h-6" 
-                :class="iconConfig.iconClass"
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
+  <Teleport to="body">
+    <Transition name="modal">
+      <div
+        v-if="isOpen"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm"
+        @click.self="handleClose"
+      >
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+          <!-- Header -->
+          <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center gap-3">
+              <div 
+                class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
+                :class="iconConfig.bgClass"
               >
-                <path 
-                  stroke-linecap="round" 
-                  stroke-linejoin="round" 
-                  stroke-width="2" 
-                  :d="iconConfig.path" 
-                />
-              </svg>
-            </div>
-            <div class="flex-1">
-              <h2 class="text-xl font-bold text-gray-900">{{ title }}</h2>
+                <svg 
+                  class="w-6 h-6" 
+                  :class="iconConfig.iconClass"
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path 
+                    stroke-linecap="round" 
+                    stroke-linejoin="round" 
+                    stroke-width="2" 
+                    :d="iconConfig.path" 
+                  />
+                </svg>
+              </div>
+              <div class="flex-1">
+                <h2 class="text-xl font-bold text-gray-900">{{ title }}</h2>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Content -->
-        <div class="p-6">
-          <p class="text-gray-700" v-html="message"></p>
-        </div>
+          <!-- Content -->
+          <div class="p-6">
+            <p class="text-gray-700" v-html="message"></p>
+          </div>
 
-        <!-- Actions -->
-        <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
-          <button
-            type="button"
-            @click="handleClose"
-            :disabled="loading"
-            class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-          >
-            {{ cancelText }}
-          </button>
-          <button
-            type="button"
-            @click="handleConfirm"
-            :disabled="loading"
-            class="px-6 py-2.5 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
-            :class="confirmButtonClass"
-          >
-            <svg v-if="loading" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>{{ loading ? 'Đang xử lý...' : confirmText }}</span>
-          </button>
+          <!-- Actions -->
+          <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+            <button
+              type="button"
+              @click="handleClose"
+              :disabled="loading"
+              class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            >
+              {{ cancelText }}
+            </button>
+            <button
+              type="button"
+              @click="handleConfirm"
+              :disabled="loading"
+              class="px-6 py-2.5 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
+              :class="confirmButtonClass"
+            >
+              <svg v-if="loading" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>{{ loading ? 'Đang xử lý...' : confirmText }}</span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </Transition>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>
