@@ -91,7 +91,7 @@ const handleClose = () => {
                 <p class="text-sm font-semibold text-gray-900 truncate">{{ item.name }}</p>
                 <p class="text-xs text-gray-500 truncate">{{ item.email }}</p>
               </div>
-              <div v-if="item.role" class="px-2 py-1 bg-gray-100 rounded text-[10px] font-medium text-gray-600 uppercase">
+              <div v-if="item.role" class="px-2 py-1 bg-gray-100 rounded text-[10px] font-medium text-gray-600">
                 {{ item.role }}
               </div>
             </div>

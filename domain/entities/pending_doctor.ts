@@ -16,4 +16,6 @@ export interface PendingDoctor {
   backCccdUrl: string;
   frontCccdUrl: string;
   isDeleted: boolean;
+  status: string;
+  denyReason?: string;
 }

@@ -19,7 +19,15 @@ export class DoctorRepositoryImpl implements IDoctorRepository {
     return await this.client.get<PendingDoctor[]>('/doctor/get-pending-doctor');
   }
 
+  async getRejectedDoctors(): Promise<PendingDoctor[]> {
+    return await this.client.get<PendingDoctor[]>('/doctor/get-rejected-doctor');
+  }
+
   async verifyDoctor(id: string): Promise<void> {
     return await this.client.patch(`/doctor/verify-doctor/${id}`);
+  }
+
+  async rejectDoctor(id: string, reason: string): Promise<void> {
+    return await this.client.patch(`/doctor/reject-doctor/${id}`, { reason });
   }
 }

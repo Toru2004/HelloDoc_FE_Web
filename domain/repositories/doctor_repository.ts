@@ -6,5 +6,7 @@ export interface IDoctorRepository {
   getAll(): Promise<Doctor[]>;
   getAllFiltered(limit: number, offset: number, searchText: string): Promise<PaginatedResponse<Doctor>>;
   getPendingDoctors(): Promise<PendingDoctor[]>;
+  getRejectedDoctors(): Promise<PendingDoctor[]>;
   verifyDoctor(id: string): Promise<void>;
+  rejectDoctor(id: string, reason: string): Promise<void>;
 }

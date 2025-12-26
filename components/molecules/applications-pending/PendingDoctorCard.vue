@@ -10,11 +10,16 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'verify', id: string): void;
+  (e: 'reject', id: string): void;
   (e: 'view-image', url: string): void;
 }>();
 
 const handleVerify = () => {
   emit('verify', props.doctor.userId); 
+};
+
+const handleReject = () => {
+  emit('reject', props.doctor.userId);
 };
 
 const openImage = (url: string) => {
@@ -27,10 +32,13 @@ const openImage = (url: string) => {
 <template>
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 md:flex flex-col h-full bg-gradient-to-br from-white to-gray-50/50">
     <!-- Header / Cover -->
-    <div class="h-24 bg-gradient-to-r from-blue-500 to-indigo-600 relative">
+    <div 
+        class="h-24 relative transition-colors duration-300"
+        :class="doctor.status === 'rejected' ? 'bg-gradient-to-r from-red-500 to-rose-600' : 'bg-gradient-to-r from-blue-500 to-indigo-600'"
+    >
         <div class="absolute top-4 right-4 bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-xs text-white font-medium border border-white/20 flex items-center gap-1">
              <ShieldAlert class="w-3 h-3" />
-             Chờ duyệt
+             {{ doctor.status === 'rejected' ? 'Đã từ chối' : 'Chờ duyệt' }}
         </div>
     </div>
 
@@ -91,14 +99,30 @@ const openImage = (url: string) => {
             <div v-if="doctor.certificates" class="text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-100 italic">
                 "{{ doctor.certificates }}"
             </div>
+
+            <div v-if="doctor.status === 'rejected' && doctor.denyReason" class="mt-3 p-3 bg-red-50 border border-red-100 rounded-xl">
+                <p class="text-xs font-bold text-red-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <X class="w-3 h-3" />
+                    Lý do từ chối
+                </p>
+                <p class="text-sm text-red-700 font-medium">{{ doctor.denyReason }}</p>
+            </div>
        </div>
 
        <!-- Actions -->
-       <div class="mt-6 pt-4 border-t border-gray-100 flex gap-3">
+       <div v-if="doctor.status !== 'rejected'" class="mt-6 pt-4 border-t border-gray-100 flex gap-3">
+           <button 
+                @click="handleReject"
+                :disabled="loading"
+                class="flex-1 flex items-center justify-center gap-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 py-2.5 px-4 rounded-xl font-medium transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+                <X class="w-4 h-4" />
+                Từ chối
+           </button>
            <button 
                 @click="handleVerify"
                 :disabled="loading"
-                class="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-2.5 px-4 rounded-xl font-medium shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                class="flex-[1.5] flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-2.5 px-4 rounded-xl font-medium shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
                 <Check v-if="!loading" class="w-4 h-4" />
                 <div v-else class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
