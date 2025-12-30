@@ -53,7 +53,7 @@ const renderMediaCell = (row: News) => {
   const mediaCount = row.media.length;
   
   if (mediaCount === 0) {
-    return h('div', { class: 'text-sm text-gray-400' }, 'Không có media');
+    return h('div', { class: 'text-sm text-gray-400' }, '');
   }
 
   return h('div', { class: 'flex items-center gap-2' }, [
@@ -66,9 +66,9 @@ const renderMediaCell = (row: News) => {
         target.style.display = 'none';
       }
     }),
-    h('div', { class: 'text-sm text-gray-600' }, 
-      `${mediaCount} ${mediaCount === 1 ? 'file' : 'files'}`
-    )
+    // h('div', { class: 'text-sm text-gray-600' }, 
+    //   `${mediaCount} ${mediaCount === 1 ? 'file' : 'files'}`
+    // )
   ]);
 };
 
@@ -179,7 +179,7 @@ const columns: TableColumn<News>[] = [
   },
   {
     key: 'media',
-    label: 'Media',
+    label: 'Hình ảnh',
     align: 'left',
     render: renderMediaCell as any,
   },

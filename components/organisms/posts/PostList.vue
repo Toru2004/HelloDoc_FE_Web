@@ -96,9 +96,9 @@ const renderMediaCell = (row: Post) => {
         target.style.display = 'none';
       }
     }),
-    h('div', { class: 'text-sm text-gray-600' }, 
-      `${mediaCount} ${mediaCount === 1 ? 'file' : 'files'}`
-    )
+    // h('div', { class: 'text-sm text-gray-600' }, 
+    //   `${mediaCount} ${mediaCount === 1 ? 'file' : 'files'}`
+    // )
   ]);
 };
 
@@ -189,7 +189,7 @@ const columns: TableColumn<Post>[] = [
   },
   {
     key: 'media',
-    label: 'Media',
+    label: 'Hình ảnh',
     align: 'left',
     render: renderMediaCell as any,
   },
